@@ -114,7 +114,8 @@
     let logo_url=tenant.logo_url;
     const file=document.getElementById('logoFile').files[0];
     if(file){
-      const path=myTenantId+'_'+Date.now()+'_'+file.name.replace(/\s+/g,'_');
+      const ext=(file.name.split('.').pop()||'png').replace(/[^a-zA-Z0-9]/g,'');
+      const path=myTenantId+'_'+Date.now()+'_'+Math.random().toString(16).slice(2,10)+'.'+(ext||'png');
       const { error:upErr } = await sb.storage.from('logos').upload(path,file,{upsert:true});
       if(upErr){ toast('Logo 上传失败：'+upErr.message); return; }
       logo_url=sb.storage.from('logos').getPublicUrl(path).data.publicUrl;
