@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>平台后台 · 京淼面诊平台</title>
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0; background:#f4f1ec; color:#2c2c2a; font-family:"Microsoft YaHei","PingFang SC",sans-serif; font-size:14px;}
+  header{background:#222; color:#fff; padding:14px 22px; display:flex; align-items:center; gap:12px;}
+  header .name{font-weight:700; font-size:16px;}
+  header .spacer{margin-left:auto;}
+  header button{background:#444; border:1px solid #666; color:#fff; padding:7px 14px; border-radius:8px; cursor:pointer; font:inherit;}
+  .wrap{max-width:1080px; margin:20px auto; padding:0 16px 60px;}
+  .card{background:#fff; border-radius:12px; padding:20px 22px; box-shadow:0 3px 14px rgba(0,0,0,.06); margin-bottom:18px;}
+  .card h2{margin:0 0 14px; font-size:16px; color:#C0392B;}
+  .row{display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;}
+  .row .field{flex:1; min-width:150px;}
+  .row label{display:block; font-size:12px; color:#888; margin-bottom:5px;}
+  .row input[type=text],.row input[type=email],.row input[type=password]{padding:8px 10px; border:1px solid #ddd; border-radius:8px; font:inherit; width:100%;}
+  .row input[type=color]{height:40px; padding:3px; border:1px solid #ddd; border-radius:8px;}
+  .savebtn{background:#C0392B; color:#fff; border:none; padding:9px 18px; border-radius:8px; cursor:pointer; font:inherit; font-weight:700;}
+  table{width:100%; border-collapse:collapse;}
+  th,td{border:1px solid #ececec; padding:9px 10px; text-align:left; font-size:13px;}
+  th{background:#faf7f3; color:#555;}
+  .btn-sm{background:#3B7D47; color:#fff; border:none; padding:5px 10px; border-radius:6px; cursor:pointer; font:inherit; font-size:12px;}
+  .tag{display:inline-block; padding:2px 9px; border-radius:20px; font-size:12px;}
+  .tag.on{background:#e3f3e6; color:#2f7d3f;} .tag.off{background:#f3e3e3; color:#a33;}
+  .empty{color:#aaa; padding:20px; text-align:center;}
+  .toast{position:fixed; left:50%; bottom:30px; transform:translateX(-50%); background:#2c2c2a; color:#fff; padding:12px 22px; border-radius:10px; font-size:14px; opacity:0; transition:.3s; pointer-events:none; z-index:99;}
+  .toast.show{opacity:1;}
+  a.link{color:#C0392B; text-decoration:none; font-size:12px;}
+  a.link:hover{text-decoration:underline;}
+  @media (max-width:640px){.row .field{min-width:120px;}}
+</style>
+</head>
+<body>
+<header>
+  <span class="name">京淼面诊平台 · 管理后台</span>
+  <span class="spacer"></span>
+  <button onclick="logout()">退出登录</button>
+</header>
+
+<div class="wrap">
+  <div class="card">
+    <h2>新建门店（手动开通授权）</h2>
+    <div class="row">
+      <div class="field"><label>门店标识 slug（链接用，英文/数字）</label><input type="text" id="n_slug" placeholder="如 meili"></div>
+      <div class="field"><label>门店品牌名</label><input type="text" id="n_brand" placeholder="如 美丽工作室"></div>
+      <div class="field"><label>登录邮箱</label><input type="email" id="n_email" placeholder="store@xx.com"></div>
+      <div class="field"><label>初始密码</label><input type="password" id="n_pwd" placeholder="至少6位"></div>
+      <div class="field" style="flex:0 0 110px;"><label>主题色</label><input type="color" id="n_color" value="#C0392B"></div>
+      <div class="field" style="flex:0 0 auto;"><label>&nbsp;</label><button class="savebtn" onclick="createStore()">创建并授权</button></div>
+    </div>
+    <div style="font-size:12px;color:#999;margin-top:8px;">创建后，把填写链接 <b id="hintLink">?store=slug</b> 和账号发给该门店即可。</div>
+  </div>
+
+  <div class="card">
+    <h2>已授权门店（<span id="tcnt">0</span>）</h2>
+    <table>
+      <thead><tr><th>品牌名</th><th>slug</th><th>登录邮箱</th><th>状态</th><th>填写链接</th><th>操作</th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="empty" id="empty">暂无门店</div>
+  </div>
+
+  <div class="card">
+    <h2>全部顾客填写记录（<span id="scnt">0</span>）</h2>
+    <table>
+      <thead><tr><th>提交时间</th><th>门店</th><th>顾客</th><th>规划师</th></tr></thead>
+      <tbody id="stbody"></tbody>
+    </table>
+    <div class="empty" id="sempty">暂无记录</div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js"></script>
+<script>
+  async function boot(){
+    const { data:{session} } = await sb.auth.getSession();
+    if(!session){ location.href='login.html'; return; }
+    const { data:su } = await sb.from('store_users').select('role').eq('id',session.user.id).single();
+    if(!su || su.role!=='platform'){ location.href='login.html'; return; }
+    loadTenants(); loadSubs();
+  }
+  async function loadTenants(){
+    const { data, error } = await sb.from('tenants').select('*').order('created_at');
+    if(error){ toast('加载失败：'+error.message); return; }
+    const tb=document.getElementById('tbody'); tb.innerHTML='';
+    document.getElementById('tcnt').textContent=data.length;
+    document.getElementById('empty').style.display=data.length?'none':'block';
+    data.forEach(t=>{
+      const link=location.origin+location.pathname.replace('admin.html','')+'index.html?store='+t.slug;
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td><b>${t.brand_name}</b></td><td>${t.slug}</td><td>${t.owner_email||'—'}</td>
+        <td><span class="tag ${t.active?'on':'off'}" onclick="toggle('${t.id}',${!t.active})" style="cursor:pointer">${t.active?'启用中':'已停用'}</span></td>
+        <td><a class="link" href="${link}" target="_blank">打开填写页</a></td>
+        <td><button class="btn-sm" onclick="toggle('${t.id}',${!t.active})">${t.active?'停用':'启用'}</button></td>`;
+      tb.appendChild(tr);
+    });
+  }
+  async function toggle(id,active){
+    const { error } = await sb.from('tenants').update({active}).eq('id',id);
+    if(error){ toast('操作失败：'+error.message); return; }
+    loadTenants();
+  }
+  async function createStore(){
+    const slug=(document.getElementById('n_slug').value.trim()||'').toLowerCase();
+    const brand_name=document.getElementById('n_brand').value.trim();
+    const email=document.getElementById('n_email').value.trim();
+    const password=document.getElementById('n_pwd').value;
+    const primary_color=document.getElementById('n_color').value;
+    if(!/^[a-z0-9_-]+$/.test(slug)){ toast('slug 只能含小写字母/数字/_-'); return; }
+    if(!brand_name||!email||password.length<6){ toast('请填全：品牌名、邮箱、密码至少6位'); return; }
+    const { data, error } = await sb.rpc('create_store',{p_slug:slug,p_brand_name:brand_name,p_email:email,p_password:password,p_color:primary_color});
+    if(error){ toast('创建失败：'+error.message); return; }
+    toast('✅ 门店「'+brand_name+'」已创建并授权');
+    document.getElementById('n_slug').value=''; document.getElementById('n_brand').value='';
+    document.getElementById('n_email').value=''; document.getElementById('n_pwd').value='';
+    loadTenants();
+  }
+  async function loadSubs(){
+    const { data, error } = await sb.from('submissions').select('id,created_at,customer_name,data,tenants(brand_name)').order('created_at',{ascending:false});
+    if(error){ toast('加载失败：'+error.message); return; }
+    const tb=document.getElementById('stbody'); tb.innerHTML='';
+    document.getElementById('scnt').textContent=data.length;
+    document.getElementById('sempty').style.display=data.length?'none':'block';
+    data.forEach(r=>{
+      const d=r.data||{};
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${new Date(r.created_at).toLocaleString('zh-CN')}</td>
+        <td>${r.tenants?r.tenants.brand_name:'—'}</td>
+        <td>${d.name||'—'}</td><td>${d.consultant||'—'}</td>`;
+      tb.appendChild(tr);
+    });
+  }
+  boot();
+</script>
+</body>
+</html>

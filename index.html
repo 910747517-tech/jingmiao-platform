@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>专业面诊表</title>
+<style>
+  :root{
+    --red:#C0392B; --red-bg:#FBF1F0;
+    --orange:#D4892A; --orange-bg:#FDF6EC;
+    --green:#3B7D47; --green-bg:#F1F7EE;
+    --ink:#2c2c2a; --sub:#666; --line:#e3e0db; --soft:#f5f0eb;
+    --brand:#C0392B; --brand-bg:#FBF1F0;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:#eee; color:var(--ink);
+    font-family:"Microsoft YaHei","PingFang SC","Hiragino Sans GB",sans-serif; font-size:14px; line-height:1.5;}
+  .toolbar{position:sticky; top:0; z-index:50; display:flex; gap:10px; align-items:center; justify-content:center;
+    padding:10px 14px; background:var(--brand); border-bottom:1px solid rgba(0,0,0,.1); box-shadow:0 1px 6px rgba(0,0,0,.06);}
+  .toolbar .brand{font-weight:700; color:#fff; margin-right:auto; font-size:14px; display:flex; align-items:center; gap:8px;}
+  .toolbar .brand img{height:26px; width:26px; border-radius:6px; object-fit:cover; background:#fff;}
+  .toolbar button{border:1px solid rgba(255,255,255,.5); background:rgba(255,255,255,.15); color:#fff; padding:7px 14px;
+    border-radius:8px; cursor:pointer; font-size:13px; font-family:inherit;}
+  .toolbar button.primary{background:#fff; color:var(--brand); border-color:#fff; font-weight:700;}
+  .toolbar button:hover{filter:brightness(.95);}
+  #saved{font-size:12px; color:rgba(255,255,255,.85); min-width:70px; text-align:right;}
+  .page{max-width:840px; margin:18px auto 60px; background:#fff; padding:30px 34px; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,.07);}
+  header.doc-head{text-align:center; margin-bottom:18px;}
+  header.doc-head h1{font-size:22px; margin:0 0 8px; color:var(--brand); letter-spacing:1px;}
+  .infobar{display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:6px;}
+  .infobar label{display:block; font-size:12px; color:var(--sub); margin-bottom:3px;}
+  .infobar input{width:100%; border:1px solid var(--line); border-radius:6px; padding:6px 8px; font:inherit;}
+  .infobar select{width:100%; border:1px solid var(--line); border-radius:6px; padding:6px 8px; font:inherit; background:#fff; cursor:pointer;}
+  .sec-title{margin:22px 0 10px; padding:8px 12px; border-radius:8px; font-weight:700; font-size:15px; display:flex; align-items:center; gap:8px;}
+  .sec-title.red{background:var(--red-bg); color:var(--red);}
+  .sec-title.orange{background:var(--orange-bg); color:var(--orange);}
+  .sec-title.green{background:var(--green-bg); color:var(--green);}
+  .sub-title{font-weight:700; font-size:14px; margin:14px 0 8px; color:#444;}
+  .sub-title.red{color:var(--red);} .sub-title.orange{color:var(--orange);} .sub-title.green{color:var(--green);}
+  table{width:100%; border-collapse:collapse; margin-bottom:6px;}
+  th,td{border:1px solid var(--line); padding:7px 9px; vertical-align:top; text-align:left; font-size:13px;}
+  th{background:var(--soft); font-weight:700; color:#444;}
+  .lbl{background:var(--soft); font-weight:600; color:#555; white-space:nowrap; width:1%;}
+  input.f, textarea.f{width:100%; border:1px solid transparent; border-bottom:1px dashed #c9c4bd; padding:5px 4px; font:inherit; background:transparent; resize:vertical;}
+  input.f:focus, textarea.f:focus{outline:none; border-bottom:1.5px solid var(--green); background:#fafdf8;}
+  textarea.f{min-height:34px;}
+  .checks{display:flex; flex-wrap:wrap; gap:6px 14px; padding:8px 6px;}
+  .chk{display:inline-flex; align-items:center; gap:6px; font-size:13px; cursor:pointer; user-select:none;}
+  .chk input{width:16px; height:16px; accent-color:var(--green); cursor:pointer;}
+  .checks.h{display:flex; gap:18px; flex-wrap:wrap;}
+  .checks.g2{display:grid; grid-template-columns:repeat(4,1fr); gap:6px 12px;}
+  .face-wrap{display:grid; grid-template-columns:240px 1fr; gap:16px; align-items:start;}
+  .photo-frame{border:2px dashed #cdcdcd; border-radius:10px; aspect-ratio:3/4; background:#fafafa; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; color:#aaa; font-size:13px; text-align:center; overflow:hidden; position:relative;}
+  .photo-frame img{max-width:100%; max-height:100%; object-fit:cover;}
+  .photo-frame input{display:none;}
+  .photo-frame .hint{padding:0 10px;}
+  @media print{body{background:#fff;} .toolbar{display:none;} .page{box-shadow:none; margin:0; max-width:100%; padding:0 6mm;} input.f,textarea.f{border-bottom:1px solid #bbb;} .photo-frame{border:1px solid #999;}}
+  .foot{text-align:center; color:#bbb; font-size:12px; margin-top:24px;}
+  #loadMsg{padding:40px; text-align:center; color:#999;}
+  .toast{position:fixed; left:50%; bottom:30px; transform:translateX(-50%); background:#2c2c2a; color:#fff; padding:12px 22px; border-radius:10px; font-size:14px; opacity:0; transition:.3s; pointer-events:none; z-index:99;}
+  .toast.show{opacity:1;}
+  @media (max-width:640px){.page{padding:18px 14px;} .infobar{grid-template-columns:repeat(2,1fr);} .face-wrap{grid-template-columns:1fr;} .checks.g2{grid-template-columns:repeat(2,1fr);}}
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <span class="brand"><img id="brandLogo" alt="" style="display:none"><span id="brandName">专业面诊表</span></span>
+  <span id="saved">填写自动保存</span>
+  <button onclick="window.print()">导出 / 打印 PDF</button>
+  <button class="primary" onclick="submitForm()">提交到门店</button>
+</div>
+
+<div class="page" id="page" style="display:none">
+  <header class="doc-head"><h1 id="docTitle">专业面诊表</h1></header>
+
+  <div class="infobar">
+    <div><label>顾客姓名</label><input class="f" name="name" placeholder=""></div>
+    <div><label>年龄</label><select class="f" name="age" id="ageSel"><option value="">请选择</option></select></div>
+    <div><label>首次面诊</label><input class="f" name="firstDate" placeholder=""></div>
+    <div><label>一个月可以到店几次</label><select class="f" name="booking" id="visitSel"><option value="">请选择</option></select></div>
+    <div><label>皮肤规划师</label><select class="f" name="consultant" id="plannerSel"><option value="">请选择</option><option value="Ami">Ami</option><option value="媛媛">媛媛</option><option value="Miu">Miu</option></select></div>
+  </div>
+
+  <div class="sec-title red">一、皮肤问题是什么（问题定义与诊断）</div>
+  <div class="sub-title red">主诉信息</div>
+  <table>
+    <tr><td class="lbl">目前最在意的问题</td><td><textarea class="f" name="q_concern" rows="1"></textarea></td></tr>
+    <tr><td class="lbl">该问题开始时间</td><td><input class="f" name="q_start"></td></tr>
+    <tr><td class="lbl">是否有反复情况</td><td><input class="f" name="q_repeat"></td></tr>
+    <tr><td class="lbl">问题产生的困扰</td><td><textarea class="f" name="q_bother" rows="1"></textarea></td></tr>
+    <tr><td class="lbl">期待改善到什么效果</td><td><textarea class="f" name="q_expect" rows="1"></textarea></td></tr>
+  </table>
+  <div class="sub-title red">肤质类型 &amp; 项目偏好</div>
+  <table>
+    <tr><td class="lbl" style="width:160px;">肤质类型判断</td><td><div class="checks g2">
+      <label class="chk"><input type="checkbox" name="skin" value="干性">干性</label>
+      <label class="chk"><input type="checkbox" name="skin" value="油性">油性</label>
+      <label class="chk"><input type="checkbox" name="skin" value="中性">中性</label>
+      <label class="chk"><input type="checkbox" name="skin" value="敏感性">敏感性</label>
+      <label class="chk"><input type="checkbox" name="skin" value="混合偏干">混合偏干</label>
+      <label class="chk"><input type="checkbox" name="skin" value="混合偏油">混合偏油</label>
+      <label class="chk"><input type="checkbox" name="skin" value="水油失衡">水油失衡</label>
+      <label class="chk"><input type="checkbox" name="skin" value="菌群失衡">菌群失衡</label>
+    </div></td></tr>
+    <tr><td class="lbl">更偏好生美还是医美</td><td><div class="checks h">
+      <label class="chk"><input type="checkbox" name="prefer" value="纯家居护肤">纯家居护肤</label>
+      <label class="chk"><input type="checkbox" name="prefer" value="生美护理为主">生美护理为主</label>
+      <label class="chk"><input type="checkbox" name="prefer" value="医美项目为主">医美项目为主</label>
+      <label class="chk"><input type="checkbox" name="prefer" value="综合方案">综合方案</label>
+    </div></td></tr>
+  </table>
+  <div class="sub-title red">面部分布区域症状（勾选 + 描述）</div>
+  <div class="face-wrap">
+    <label class="photo-frame" id="frame">
+      <img id="faceImg" alt=""><span class="hint">点击上传面部照片<br>（顾客面部实拍）</span>
+      <input type="file" id="faceInput" accept="image/*">
+    </label>
+    <table>
+      <tr><th style="width:70px;">区域</th><th>症状勾选</th><th>补充描述</th></tr>
+      <tr><td class="lbl">额头</td><td><div class="checks">
+        <label class="chk"><input type="checkbox" name="z_forehead" value="出油多">出油多</label>
+        <label class="chk"><input type="checkbox" name="z_forehead" value="闭口粉刺">闭口粉刺</label>
+        <label class="chk"><input type="checkbox" name="z_forehead" value="红肿痘痘">红肿痘痘</label>
+        <label class="chk"><input type="checkbox" name="z_forehead" value="色沉/痘印">色沉/痘印</label></div></td><td><input class="f" name="d_forehead"></td></tr>
+      <tr><td class="lbl">鼻周</td><td><div class="checks">
+        <label class="chk"><input type="checkbox" name="z_nose" value="脂溢/泛红">脂溢/泛红</label>
+        <label class="chk"><input type="checkbox" name="z_nose" value="黑头/白头">黑头/白头</label>
+        <label class="chk"><input type="checkbox" name="z_nose" value="毛孔粗大">毛孔粗大</label>
+        <label class="chk"><input type="checkbox" name="z_nose" value="毛囊虫">毛囊虫</label></div></td><td><input class="f" name="d_nose"></td></tr>
+      <tr><td class="lbl">脸颊</td><td><div class="checks">
+        <label class="chk"><input type="checkbox" name="z_cheek" value="泛红/血丝">泛红/血丝</label>
+        <label class="chk"><input type="checkbox" name="z_cheek" value="敏感刺痛">敏感刺痛</label>
+        <label class="chk"><input type="checkbox" name="z_cheek" value="干燥脱屑">干燥脱屑</label>
+        <label class="chk"><input type="checkbox" name="z_cheek" value="色斑">色斑</label>
+        <label class="chk"><input type="checkbox" name="z_cheek" value="毛孔粗大">毛孔粗大</label></div></td><td><input class="f" name="d_cheek"></td></tr>
+      <tr><td class="lbl">下巴</td><td><div class="checks">
+        <label class="chk"><input type="checkbox" name="z_chin" value="成片痘痘">成片痘痘</label>
+        <label class="chk"><input type="checkbox" name="z_chin" value="闭口">闭口</label>
+        <label class="chk"><input type="checkbox" name="z_chin" value="色素沉淀">色素沉淀</label>
+        <label class="chk"><input type="checkbox" name="z_chin" value="下颌线模糊">下颌线模糊</label></div></td><td><input class="f" name="d_chin"></td></tr>
+      <tr><td class="lbl">眼周</td><td><div class="checks">
+        <label class="chk"><input type="checkbox" name="z_eye" value="黑眼圈">黑眼圈</label>
+        <label class="chk"><input type="checkbox" name="z_eye" value="眼袋">眼袋</label>
+        <label class="chk"><input type="checkbox" name="z_eye" value="细纹">细纹</label>
+        <label class="chk"><input type="checkbox" name="z_eye" value="眼部皮脂腺">眼部皮脂腺</label></div></td><td><input class="f" name="d_eye"></td></tr>
+    </table>
+  </div>
+  <div class="sub-title red">过往解决手段（可多选）</div>
+  <div class="checks h" style="border:1px solid var(--line); border-radius:8px;">
+    <label class="chk"><input type="checkbox" name="past" value="日常护肤">日常护肤</label>
+    <label class="chk"><input type="checkbox" name="past" value="药物/药膏">药物/药膏</label>
+    <label class="chk"><input type="checkbox" name="past" value="医美/光电">医美/光电</label>
+    <label class="chk"><input type="checkbox" name="past" value="中医/食疗">中医/食疗</label>
+    <label class="chk"><input type="checkbox" name="past" value="其他">其他</label>
+  </div>
+  <div class="sub-title red">护肤习惯（可多选）</div>
+  <div style="border:1px solid var(--line); border-radius:8px; padding:10px 12px; margin-bottom:6px;">
+    <div style="font-size:13px; margin-bottom:8px;"><b>洗脸方式：</b><div class="checks">
+      <label class="chk"><input type="checkbox" name="hw_wash" value="洁面巾">洁面巾</label>
+      <label class="chk"><input type="checkbox" name="hw_wash" value="毛巾">毛巾</label>
+      <label class="chk"><input type="checkbox" name="hw_wash" value="纸巾">纸巾</label>
+      <label class="chk"><input type="checkbox" name="hw_wash" value="自然晾干">自然晾干</label>
+      <label class="chk"><input type="checkbox" name="hw_wash" value="热水">热水</label>
+      <label class="chk"><input type="checkbox" name="hw_wash" value="冷水">冷水</label>
+      <label class="chk"><input type="checkbox" name="hw_wash" value="温水">温水</label></div></div>
+    <div style="font-size:13px; margin-bottom:8px;"><b>卸妆方式：</b><div class="checks">
+      <label class="chk"><input type="checkbox" name="hw_remove" value="洁面乳">洁面乳</label>
+      <label class="chk"><input type="checkbox" name="hw_remove" value="卸妆水">卸妆水</label>
+      <label class="chk"><input type="checkbox" name="hw_remove" value="卸妆油">卸妆油</label>
+      <label class="chk"><input type="checkbox" name="hw_remove" value="卸妆膏">卸妆膏</label></div></div>
+    <div style="font-size:13px; margin-bottom:8px;"><b>清洁力度：</b><div class="checks">
+      <label class="chk"><input type="checkbox" name="hw_strength" value="早清水晚洁面">早清水晚洁面</label>
+      <label class="chk"><input type="checkbox" name="hw_strength" value="早晚都洁面">早晚都洁面</label>
+      <label class="chk"><input type="checkbox" name="hw_strength" value="早晚都清水">早晚都清水</label></div></div>
+    <div style="font-size:13px; margin-bottom:8px;"><b>面膜频率：</b><div class="checks">
+      <label class="chk"><input type="checkbox" name="hw_mask" value="每天">每天</label>
+      <label class="chk"><input type="checkbox" name="hw_mask" value="2-3次/周">2-3次/周</label>
+      <label class="chk"><input type="checkbox" name="hw_mask" value="偶尔">偶尔</label>
+      <label class="chk"><input type="checkbox" name="hw_mask" value="从不">从不</label></div></div>
+    <div style="font-size:13px;"><b>防晒频率：</b><div class="checks">
+      <label class="chk"><input type="checkbox" name="hw_spf" value="每天">每天</label>
+      <label class="chk"><input type="checkbox" name="hw_spf" value="2-3次/周">2-3次/周</label>
+      <label class="chk"><input type="checkbox" name="hw_spf" value="偶尔">偶尔</label>
+      <label class="chk"><input type="checkbox" name="hw_spf" value="从不">从不</label></div></div>
+  </div>
+  <div class="sub-title red">生活习惯（可多选）</div>
+  <div class="checks g2" style="border:1px solid var(--line); border-radius:8px;">
+    <label class="chk"><input type="checkbox" name="habit" value="压力较大">压力较大</label>
+    <label class="chk"><input type="checkbox" name="habit" value="作息不规律">作息不规律</label>
+    <label class="chk"><input type="checkbox" name="habit" value="重油重盐">重油重盐</label>
+    <label class="chk"><input type="checkbox" name="habit" value="喜甜/奶制品">喜甜/奶制品</label>
+    <label class="chk"><input type="checkbox" name="habit" value="饮水量少">饮水量少</label>
+    <label class="chk"><input type="checkbox" name="habit" value="便秘">便秘</label>
+    <label class="chk"><input type="checkbox" name="habit" value="内分泌不稳">内分泌不稳</label>
+    <label class="chk"><input type="checkbox" name="habit" value="频繁换护肤品">频繁换护肤品</label>
+  </div>
+
+  <div class="sec-title orange">二、它的解决思路是什么（解决路径与方案设计）</div>
+  <div class="sub-title orange">问题机制解析（给顾客讲明白）</div>
+  <table>
+    <tr><td class="lbl" style="width:120px;">表层现象</td><td><textarea class="f" name="m_surface" rows="1"></textarea></td></tr>
+    <tr><td class="lbl">深层原因</td><td><textarea class="f" name="m_deep" rows="2"></textarea></td></tr>
+    <tr><td class="lbl">恶性循环链</td><td><textarea class="f" name="m_loop" rows="1"></textarea></td></tr>
+  </table>
+  <div class="sub-title orange">分阶段解决路线图</div>
+  <table>
+    <tr><th style="width:110px;">阶段</th><th>阶段目标</th><th>核心策略</th><th>具体手段</th><th style="width:80px;">周期</th></tr>
+    <tr><td class="lbl">一·急救/控炎</td><td><input class="f" name="r1_goal" value="控制急性炎症、减少新发痘"></td><td><input class="f" name="r1_strategy" value="抗炎+抑菌+温和清洁"></td><td><input class="f" name="r1_action"></td><td><input class="f" name="r1_cycle" value="2-4周"></td></tr>
+    <tr><td class="lbl">二·修复/重建</td><td><input class="f" name="r2_goal" value="修复屏障、平衡菌群、疏通"></td><td><input class="f" name="r2_strategy" value="屏障修护+代谢调节"></td><td><input class="f" name="r2_action"></td><td><input class="f" name="r2_cycle" value="4-8周"></td></tr>
+    <tr><td class="lbl">三·维持/预防</td><td><input class="f" name="r3_goal" value="维持稳定、预防复发、改善"></td><td><input class="f" name="r3_strategy" value="维稳养护+定期管理"></td><td><input class="f" name="r3_action"></td><td><input class="f" name="r3_cycle" value="长期"></td></tr>
+  </table>
+  <div class="sub-title orange">院线护理季度规划</div>
+  <table>
+    <tr><th style="width:110px;">层次</th><th>规划要素</th><th>推荐项目/成分</th><th style="width:90px;">频率</th></tr>
+    <tr><td class="lbl">角质层</td><td><input class="f" name="p1_elem"></td><td><input class="f" name="p1_proj"></td><td><input class="f" name="p1_freq"></td></tr>
+    <tr><td class="lbl">表皮层</td><td><input class="f" name="p2_elem"></td><td><input class="f" name="p2_proj"></td><td><input class="f" name="p2_freq"></td></tr>
+    <tr><td class="lbl">毛囊</td><td><input class="f" name="p3_elem"></td><td><input class="f" name="p3_proj"></td><td><input class="f" name="p3_freq"></td></tr>
+    <tr><td class="lbl">真皮层</td><td><input class="f" name="p4_elem"></td><td><input class="f" name="p4_proj"></td><td><input class="f" name="p4_freq"></td></tr>
+  </table>
+  <div class="sub-title orange">本次护理重点方向</div>
+  <div class="checks g2" style="border:1px solid var(--line); border-radius:8px;">
+    <label class="chk"><input type="checkbox" name="focus" value="补水保湿">补水保湿</label>
+    <label class="chk"><input type="checkbox" name="focus" value="控油抑脂">控油抑脂</label>
+    <label class="chk"><input type="checkbox" name="focus" value="抗炎舒缓">抗炎舒缓</label>
+    <label class="chk"><input type="checkbox" name="focus" value="屏障修复">屏障修复</label>
+    <label class="chk"><input type="checkbox" name="focus" value="美白提亮">美白提亮</label>
+    <label class="chk"><input type="checkbox" name="focus" value="细腻毛孔">细腻毛孔</label>
+    <label class="chk"><input type="checkbox" name="focus" value="净白祛痘">净白祛痘</label>
+    <label class="chk"><input type="checkbox" name="focus" value="抗衰紧致">抗衰紧致</label>
+    <label class="chk"><input type="checkbox" name="focus" value="修敏褪红">修敏褪红</label>
+    <label class="chk"><input type="checkbox" name="focus" value="淡纹">淡纹</label>
+    <label class="chk"><input type="checkbox" name="focus" value="祛痘">祛痘</label>
+    <label class="chk"><input type="checkbox" name="focus" value="控油">控油</label>
+    <label class="chk"><input type="checkbox" name="focus" value="闭口">闭口</label>
+  </div>
+
+  <div class="sec-title green">三、家居方案应该怎么做（居家护理方案）</div>
+  <div class="sub-title green">早间护肤流程（AM）</div>
+  <table>
+    <tr><th style="width:50px;">步骤</th><th style="width:140px;">动作</th><th>推荐产品类型</th><th>关键要点</th></tr>
+    <tr><td class="lbl">1</td><td>清水/温和洁面</td><td><input class="f" name="am1_prod"></td><td><input class="f" name="am1_note"></td></tr>
+    <tr><td class="lbl">2</td><td>爽肤水/精华水</td><td><input class="f" name="am2_prod"></td><td><input class="f" name="am2_note"></td></tr>
+    <tr><td class="lbl">3</td><td>功能性精华</td><td><input class="f" name="am3_prod"></td><td><input class="f" name="am3_note"></td></tr>
+    <tr><td class="lbl">4</td><td>保湿乳液/面霜</td><td><input class="f" name="am4_prod"></td><td><input class="f" name="am4_note"></td></tr>
+    <tr><td class="lbl">5</td><td>防晒（必做）</td><td><input class="f" name="am5_prod"></td><td><input class="f" name="am5_note"></td></tr>
+  </table>
+  <div class="sub-title green">晚间护肤流程（PM）</div>
+  <table>
+    <tr><th style="width:50px;">步骤</th><th style="width:140px;">动作</th><th>推荐产品类型</th><th>关键要点</th></tr>
+    <tr><td class="lbl">1</td><td>卸妆（如有）</td><td><input class="f" name="pm1_prod"></td><td><input class="f" name="pm1_note"></td></tr>
+    <tr><td class="lbl">2</td><td>洁面</td><td><input class="f" name="pm2_prod"></td><td><input class="f" name="pm2_note"></td></tr>
+    <tr><td class="lbl">3</td><td>爽肤水/精华水</td><td><input class="f" name="pm3_prod"></td><td><input class="f" name="pm3_note"></td></tr>
+    <tr><td class="lbl">4</td><td>功能性精华</td><td><input class="f" name="pm4_prod"></td><td><input class="f" name="pm4_note"></td></tr>
+    <tr><td class="lbl">5</td><td>眼霜</td><td><input class="f" name="pm5_prod"></td><td><input class="f" name="pm5_note"></td></tr>
+    <tr><td class="lbl">6</td><td>保湿/修护面霜</td><td><input class="f" name="pm6_prod"></td><td><input class="f" name="pm6_note"></td></tr>
+    <tr><td class="lbl">7</td><td>周期护理</td><td><input class="f" name="pm7_prod"></td><td><input class="f" name="pm7_note"></td></tr>
+  </table>
+  <div class="sub-title green">产品建议 / 生活调整 / 跟进</div>
+  <table>
+    <tr><th style="width:120px;">居家产品类别</th><th>品牌/产品</th><th style="width:120px;">生活维度</th><th>建议</th></tr>
+    <tr><td class="lbl">洁面</td><td><input class="f" name="pr_cleanse"></td><td class="lbl">饮食</td><td><input class="f" name="la_diet"></td></tr>
+    <tr><td class="lbl">水/爽肤水</td><td><input class="f" name="pr_toner"></td><td class="lbl">作息</td><td><input class="f" name="la_sleep"></td></tr>
+    <tr><td class="lbl">精华</td><td><input class="f" name="pr_serum"></td><td class="lbl">运动</td><td><input class="f" name="la_sport"></td></tr>
+    <tr><td class="lbl">乳液/面霜</td><td><input class="f" name="pr_cream"></td><td class="lbl">情绪/压力</td><td><input class="f" name="la_mood"></td></tr>
+    <tr><td class="lbl">防晒</td><td><input class="f" name="pr_spf"></td><td class="lbl">复诊/回访</td><td><input class="f" name="la_revisit"></td></tr>
+    <tr><td class="lbl">周期护理</td><td><input class="f" name="pr_cycle"></td><td class="lbl"></td><td></td></tr>
+  </table>
+  <div class="sub-title green">绝对不要做的事（避坑指南）</div>
+  <table><tr><td><textarea class="f" name="avoid" rows="2" placeholder="例如：不要用手挤痘痘、不要过度清洁、不要频繁更换功效产品……"></textarea></td></tr></table>
+  <div class="foot" id="foot">专业面诊表</div>
+</div>
+
+<div id="loadMsg">正在加载门店信息…</div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js"></script>
+<script>
+  const slug = new URLSearchParams(location.search).get('store');
+  let tenant = null;
+
+  async function init(){
+    if(!slug){ document.getElementById('loadMsg').textContent='缺少门店参数：链接应为 ?store=门店标识'; return; }
+    const { data, error } = await sb.from('tenants').select('*').eq('slug', slug).single();
+    if(error || !data){ document.getElementById('loadMsg').textContent='未找到该门店（标识：'+slug+'）'; return; }
+    tenant = data;
+    applyBrand(data);
+    document.getElementById('loadMsg').style.display='none';
+    document.getElementById('page').style.display='block';
+    loadLocal();
+  }
+
+  function applyBrand(t){
+    document.documentElement.style.setProperty('--brand', t.primary_color||'#C0392B');
+    document.title = (t.brand_name||'专业面诊表') + ' · 面诊表';
+    document.getElementById('brandName').textContent = t.brand_name||'专业面诊表';
+    document.getElementById('docTitle').textContent = (t.brand_name||'专业面诊表') + ' · 专业面诊表';
+    document.getElementById('foot').textContent = (t.brand_name||'专业面诊表') + ' · 专业面诊表';
+    if(t.logo_url){ const im=document.getElementById('brandLogo'); im.src=t.logo_url; im.style.display='inline-block'; }
+  }
+
+  // ---- 收集表单 ----
+  const $all=()=>document.querySelectorAll('#page input,#page textarea');
+  function collect(){
+    const data={};
+    $all().forEach(el=>{
+      if(el.type==='checkbox'||el.type==='radio'){
+        (data[el.name]=data[el.name]||[]); if(el.checked) data[el.name].push(el.value);
+      }else if(el.id!=='faceInput'){ data[el.name]=el.value; }
+    });
+    data.__photo=document.getElementById('faceImg').src||'';
+    return data;
+  }
+  function save(){
+    if(!tenant) return;
+    localStorage.setItem('facesheet_'+tenant.slug, JSON.stringify(collect()));
+    const s=document.getElementById('saved'); s.textContent='已保存 '+new Date().toLocaleTimeString('zh-CN');
+  }
+  function loadLocal(){
+    const raw=localStorage.getItem('facesheet_'+(tenant?tenant.slug:'')); if(!raw) return;
+    let d; try{d=JSON.parse(raw);}catch(e){return;}
+    $all().forEach(el=>{
+      if(el.id==='faceInput') return;
+      if(el.type==='checkbox'||el.type==='radio'){ if((d[el.name]||[]).includes(el.value)) el.checked=true; }
+      else if(d[el.name]!==undefined){ el.value=d[el.name]; }
+    });
+    if(d.__photo) document.getElementById('faceImg').src=d.__photo;
+  }
+  $all().forEach(el=>{ el.addEventListener('input',save); el.addEventListener('change',save); });
+
+  function fillRange(sel,s,e){ for(let i=s;i<=e;i++){ const o=document.createElement('option'); o.value=i; o.textContent=i; sel.appendChild(o);} }
+  fillRange(document.getElementById('ageSel'),16,70);
+  fillRange(document.getElementById('visitSel'),0,20);
+
+  document.getElementById('faceInput').addEventListener('change',e=>{
+    const f=e.target.files[0]; if(!f) return;
+    const r=new FileReader(); r.onload=ev=>{ document.getElementById('faceImg').src=ev.target.result; save(); }; r.readAsDataURL(f);
+  });
+
+  function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2600); }
+
+  async function submitForm(){
+    if(!tenant){ toast('门店未加载'); return; }
+    const btn=document.querySelector('.toolbar button.primary'); btn.disabled=true; btn.textContent='提交中…';
+    const data=collect();
+    // ★ 使用 RPC 安全函数提交（绕过 RLS，SECURITY DEFINER 执行）
+    const payload = { tenant_id: tenant.id, customer_name: data.name||'', ...data };
+    delete payload.name;
+    const { data: result, error } = await sb.rpc('submit_form', { p_data: payload });
+    btn.disabled=false; btn.textContent='提交到门店';
+    if(error){ toast('提交失败：'+error.message); console.error(error); }
+    else { toast('✅ 已提交到'+tenant.brand_name+'！'); localStorage.removeItem('facesheet_'+tenant.slug); setTimeout(()=>location.reload(),1500); }
+  }
+
+  init();
+</script>
+</body>
+</html>

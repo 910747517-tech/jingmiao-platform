@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>京淼面诊平台 · 登录</title>
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(135deg,#C0392B,#7c241c); font-family:"Microsoft YaHei","PingFang SC",sans-serif; color:#333;}
+  .box{background:#fff; width:340px; padding:34px 30px; border-radius:16px; box-shadow:0 10px 40px rgba(0,0,0,.25);}
+  .box h1{font-size:19px; margin:0 0 4px; color:#C0392B; text-align:center;}
+  .box .sub{text-align:center; color:#999; font-size:13px; margin-bottom:22px;}
+  .box input{width:100%; padding:11px 12px; margin-bottom:14px; border:1px solid #ddd; border-radius:9px; font:inherit; font-size:14px;}
+  .box input:focus{outline:none; border-color:#C0392B;}
+  .box button{width:100%; padding:12px; background:#C0392B; color:#fff; border:none; border-radius:9px; font-size:15px; font-weight:700; cursor:pointer;}
+  .box button:hover{filter:brightness(.95);}
+  #msg{color:#c0392b; font-size:13px; min-height:18px; text-align:center; margin-top:8px;}
+  .hint{font-size:12px; color:#aaa; text-align:center; margin-top:14px;}
+  .toast{position:fixed; left:50%; bottom:30px; transform:translateX(-50%); background:#2c2c2a; color:#fff; padding:12px 22px; border-radius:10px; font-size:14px; opacity:0; transition:.3s; pointer-events:none; z-index:99;}
+  .toast.show{opacity:1;}
+</style>
+</head>
+<body>
+  <div class="box">
+    <h1>京淼面诊平台</h1>
+    <div class="sub">门店 / 平台登录</div>
+    <input id="email" type="email" placeholder="登录邮箱" value="">
+    <input id="password" type="password" placeholder="密码" value="">
+    <button onclick="doLogin()">登 录</button>
+    <div id="msg"></div>
+    <div class="hint">门店账号请向平台方（京淼）获取</div>
+  </div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js"></script>
+<script>
+  const emailEl=document.getElementById('email'), pwEl=document.getElementById('password');
+  function msg(t){ document.getElementById('msg').textContent=t; }
+  // 已登录则直接跳
+  sb.auth.getSession().then(({data})=>{
+    if(data.session){ route(data.session.user.id); }
+  });
+  async function route(uid){
+    const { data:su } = await sb.from('store_users').select('role').eq('id',uid).single();
+    if(!su){ msg('账号未关联门店'); await sb.auth.signOut(); return; }
+    location.href = su.role==='platform' ? 'admin.html' : 'dashboard.html';
+  }
+  async function doLogin(){
+    msg(''); const e=emailEl.value.trim(), p=pwEl.value;
+    if(!e||!p){ msg('请输入邮箱和密码'); return; }
+    const { data, error } = await sb.auth.signInWithPassword({ email:e, password:p });
+    if(error){ msg('登录失败：'+error.message); return; }
+    route(data.user.id);
+  }
+</script>
+</body>
+</html>

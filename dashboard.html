@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>门店后台 · 京淼面诊平台</title>
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0; background:#f4f1ec; color:#2c2c2a; font-family:"Microsoft YaHei","PingFang SC",sans-serif; font-size:14px;}
+  header{background:#C0392B; color:#fff; padding:14px 22px; display:flex; align-items:center; gap:12px;}
+  header img{height:30px; width:30px; border-radius:7px; object-fit:cover; background:#fff;}
+  header .name{font-weight:700; font-size:16px;}
+  header .spacer{margin-left:auto;}
+  header button{background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.5); color:#fff; padding:7px 14px; border-radius:8px; cursor:pointer; font:inherit;}
+  .wrap{max-width:980px; margin:20px auto; padding:0 16px 60px;}
+  .card{background:#fff; border-radius:12px; padding:20px 22px; box-shadow:0 3px 14px rgba(0,0,0,.06); margin-bottom:18px;}
+  .card h2{margin:0 0 14px; font-size:16px; color:#C0392B;}
+  .row{display:flex; gap:16px; flex-wrap:wrap; align-items:flex-end;}
+  .row .field{flex:1; min-width:200px;}
+  .row label{display:block; font-size:12px; color:#888; margin-bottom:5px;}
+  .row input[type=text],.row input[type=color]{padding:8px 10px; border:1px solid #ddd; border-radius:8px; font:inherit; width:100%;}
+  .row input[type=color]{height:40px; padding:3px;}
+  .savebtn{background:#C0392B; color:#fff; border:none; padding:9px 18px; border-radius:8px; cursor:pointer; font:inherit; font-weight:700;}
+  .logo-box{display:flex; align-items:center; gap:12px;}
+  .logo-box img{height:60px; width:60px; object-fit:cover; border-radius:8px; border:1px solid #eee;}
+  table{width:100%; border-collapse:collapse;}
+  th,td{border:1px solid #ececec; padding:9px 10px; text-align:left; font-size:13px;}
+  th{background:#faf7f3; color:#555;}
+  tr:hover td{background:#fcfaf7;}
+  .btn-sm{background:#3B7D47; color:#fff; border:none; padding:5px 10px; border-radius:6px; cursor:pointer; font:inherit; font-size:12px;}
+  .btn-sm.del{background:#b34; }
+  .empty{color:#aaa; padding:24px; text-align:center;}
+  .toast{position:fixed; left:50%; bottom:30px; transform:translateX(-50%); background:#2c2c2a; color:#fff; padding:12px 22px; border-radius:10px; font-size:14px; opacity:0; transition:.3s; pointer-events:none; z-index:99;}
+  .toast.show{opacity:1;}
+  .modal{position:fixed; inset:0; background:rgba(0,0,0,.5); display:none; align-items:flex-start; justify-content:center; padding:40px 16px; overflow:auto; z-index:100;}
+  .modal.show{display:flex;}
+  .modal .box{background:#fff; max-width:760px; width:100%; border-radius:12px; padding:24px; position:relative;}
+  .modal .box h3{margin:0 0 14px; color:#C0392B;}
+  .modal .close{position:absolute; top:14px; right:16px; cursor:pointer; font-size:20px; color:#999; border:none; background:none;}
+  .modal pre{background:#f7f5f2; padding:14px; border-radius:8px; overflow:auto; max-height:50vh; font-size:12px; white-space:pre-wrap; word-break:break-all;}
+  .modal img{max-width:160px; border-radius:8px; margin-bottom:12px;}
+  .kv{display:grid; grid-template-columns:160px 1fr; gap:6px 12px; margin-bottom:14px;}
+  .kv .k{color:#888; font-size:13px;}
+  .kv .v{font-size:13px;}
+  @media (max-width:640px){.kv{grid-template-columns:110px 1fr;}}
+</style>
+</head>
+<body>
+<header>
+  <img id="hlogo" alt="" style="display:none">
+  <span class="name" id="hname">门店后台</span>
+  <span class="spacer"></span>
+  <button onclick="logout()">退出登录</button>
+</header>
+
+<div class="wrap">
+  <div class="card">
+    <h2>门店品牌设置</h2>
+    <div class="row">
+      <div class="field"><label>门店品牌名</label><input type="text" id="brand_name"></div>
+      <div class="field" style="flex:0 0 120px;"><label>主题色</label><input type="color" id="primary_color"></div>
+      <div class="field" style="flex:0 0 auto;"><label>门店 Logo</label>
+        <div class="logo-box"><img id="logoPrev" alt="" style="display:none"><input type="file" id="logoFile" accept="image/*"></div>
+      </div>
+      <div class="field" style="flex:0 0 auto;"><label>&nbsp;</label><button class="savebtn" onclick="saveBrand()">保存品牌</button></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>顾客填写记录（<span id="cnt">0</span>）</h2>
+    <div style="margin-bottom:12px;">
+      <button class="btn-sm" onclick="exportJSON()">导出本店数据 (JSON)</button>
+    </div>
+    <table id="tbl">
+      <thead><tr><th>提交时间</th><th>顾客姓名</th><th>年龄</th><th>皮肤规划师</th><th>操作</th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="empty" id="empty">暂无记录</div>
+  </div>
+</div>
+
+<div class="modal" id="modal"><div class="box">
+  <button class="close" onclick="closeModal()">×</button>
+  <h3 id="mTitle">填写详情</h3>
+  <div id="mBody"></div>
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js"></script>
+<script>
+  let tenant=null, myTenantId=null;
+  const LABELS={name:'顾客姓名',age:'年龄',firstDate:'首次面诊',booking:'每月到店次数',consultant:'皮肤规划师',
+    q_concern:'最在意的问题',q_start:'开始时间',q_repeat:'是否反复',q_bother:'问题困扰',q_expect:'期待效果',
+    m_surface:'表层现象',m_deep:'深层原因',m_loop:'恶性循环链',avoid:'避坑指南'};
+  async function boot(){
+    const { data:{session} } = await sb.auth.getSession();
+    if(!session){ location.href='login.html'; return; }
+    const { data:su } = await sb.from('store_users').select('role,tenant_id').eq('id',session.user.id).single();
+    if(!su){ await sb.auth.signOut(); location.href='login.html'; return; }
+    if(su.role==='platform'){ location.href='admin.html'; return; }
+    myTenantId=su.tenant_id;
+    const { data:t } = await sb.from('tenants').select('*').eq('id',su.tenant_id).single();
+    tenant=t; renderBrand(t); loadSubs();
+  }
+  function renderBrand(t){
+    document.getElementById('hname').textContent=t.brand_name+' · 后台';
+    document.getElementById('brand_name').value=t.brand_name;
+    document.getElementById('primary_color').value=t.primary_color||'#C0392B';
+    if(t.logo_url){ const h=document.getElementById('hlogo'),p=document.getElementById('logoPrev'); h.src=t.logo_url; h.style.display='inline-block'; p.src=t.logo_url; p.style.display='inline-block'; }
+  }
+  async function saveBrand(){
+    const brand_name=document.getElementById('brand_name').value.trim();
+    const primary_color=document.getElementById('primary_color').value;
+    let logo_url=tenant.logo_url;
+    const file=document.getElementById('logoFile').files[0];
+    if(file){
+      const path=myTenantId+'_'+Date.now()+'_'+file.name.replace(/\s+/g,'_');
+      const { error:upErr } = await sb.storage.from('logos').upload(path,file,{upsert:true});
+      if(upErr){ toast('Logo 上传失败：'+upErr.message); return; }
+      logo_url=sb.storage.from('logos').getPublicUrl(path).data.publicUrl;
+    }
+    const { error } = await sb.from('tenants').update({ brand_name, primary_color, logo_url }).eq('id',myTenantId);
+    if(error){ toast('保存失败：'+error.message); return; }
+    tenant={...tenant,brand_name,primary_color,logo_url}; renderBrand(tenant);
+    toast('✅ 品牌已更新');
+  }
+  async function loadSubs(){
+    const { data, error } = await sb.from('submissions').select('*').eq('tenant_id',myTenantId).order('created_at',{ascending:false});
+    if(error){ toast('加载失败：'+error.message); return; }
+    const tb=document.getElementById('tbody'); tb.innerHTML='';
+    document.getElementById('cnt').textContent=data.length;
+    document.getElementById('empty').style.display=data.length?'none':'block';
+    data.forEach(r=>{
+      const d=r.data||{};
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${new Date(r.created_at).toLocaleString('zh-CN')}</td>
+        <td>${d.name||'—'}</td><td>${d.age||'—'}</td><td>${d.consultant||'—'}</td>
+        <td><button class="btn-sm" onclick="view('${r.id}')">查看</button>
+            <button class="btn-sm del" onclick="del('${r.id}')">删除</button></td>`;
+      tb.appendChild(tr);
+    });
+    window.__subs=data;
+  }
+  function view(id){
+    const r=window.__subs.find(x=>x.id===id); if(!r) return;
+    const d=r.data||{};
+    let html= d.__photo ? `<img src="${d.__photo}">` : '';
+    html+='<div class="kv">';
+    ['name','age','firstDate','booking','consultant','q_concern','q_expect'].forEach(k=>{
+      if(d[k]) html+=`<div class="k">${LABELS[k]||k}</div><div class="v">${d[k]}</div>`;
+    });
+    html+='</div>';
+    html+='<pre>'+JSON.stringify(d,null,2)+'</pre>';
+    document.getElementById('mTitle').textContent=(d.name||'顾客')+' · '+new Date(r.created_at).toLocaleString('zh-CN');
+    document.getElementById('mBody').innerHTML=html;
+    document.getElementById('modal').classList.add('show');
+  }
+  function closeModal(){ document.getElementById('modal').classList.remove('show'); }
+  async function del(id){
+    if(!confirm('确定删除这条记录？')) return;
+    const { error } = await sb.from('submissions').delete().eq('id',id);
+    if(error){ toast('删除失败：'+error.message); return; }
+    loadSubs();
+  }
+  function exportJSON(){
+    const data=window.__subs||[];
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download=(tenant.brand_name||'store')+'_submissions.json'; a.click();
+  }
+  boot();
+</script>
+</body>
+</html>
