@@ -90,7 +90,7 @@
 <script>
   let tenant=null, myTenantId=null;
   const LABELS={name:'顾客姓名',age:'年龄',firstDate:'首次面诊',booking:'每月到店次数',consultant:'皮肤规划师',
-    q_concern:'最在意的问题',q_start:'开始时间',q_repeat:'是否反复',q_bother:'问题困扰',q_expect:'期待效果',
+    q_concern:'最在意的问题',concern:'最在意的问题(多选)',q_start:'开始时间',q_repeat:'是否反复',q_bother:'问题困扰',q_expect:'期待效果',
     m_surface:'表层现象',m_deep:'深层原因',m_loop:'恶性循环链',avoid:'避坑指南'};
   async function boot(){
     const { data:{session} } = await sb.auth.getSession();
@@ -145,10 +145,16 @@
   function view(id){
     const r=window.__subs.find(x=>x.id===id); if(!r) return;
     const d=r.data||{};
-    let html= d.__photo ? `<img src="${d.__photo}">` : '';
+    let html='';
+    const poses=[['front','正面'],['left','左侧面'],['right','右侧面']];
+    if(poses.some(p=>d['face_'+p[0]])){
+      html+='<div style="margin-bottom:14px;">';
+      poses.forEach(p=>{ const b64=d['face_'+p[0]]; if(b64) html+=`<div style="display:inline-block;margin:0 8px 4px 0;vertical-align:top;"><img src="${b64}" style="max-width:170px;border-radius:8px;border:1px solid #eee;"><div style="font-size:12px;color:#888;text-align:center;margin-top:4px;">${p[1]}</div></div>`; });
+      html+='</div>';
+    }
     html+='<div class="kv">';
-    ['name','age','firstDate','booking','consultant','q_concern','q_expect'].forEach(k=>{
-      if(d[k]) html+=`<div class="k">${LABELS[k]||k}</div><div class="v">${d[k]}</div>`;
+    ['name','age','firstDate','booking','consultant','concern','q_concern','q_expect'].forEach(k=>{
+      if(d[k]) html+=`<div class="k">${LABELS[k]||k}</div><div class="v">${(Array.isArray(d[k])?d[k].join('、'):d[k])}</div>`;
     });
     html+='</div>';
     html+='<pre>'+JSON.stringify(d,null,2)+'</pre>';
