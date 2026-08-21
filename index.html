@@ -477,7 +477,7 @@
   let localDemo = false;
 
   async function init(){
-    const localPreview=location.protocol==='file:' || ['127.0.0.1','localhost'].includes(location.hostname);
+    const localPreview=(location.protocol==='file:' || ['127.0.0.1','localhost'].includes(location.hostname)) && slug==='demo';
     if(!localPreview){
       try{
         const request = sb.from('tenants').select('id,slug,brand_name,primary_color,logo_url,active').eq('slug', slug).single();
