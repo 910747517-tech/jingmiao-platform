@@ -1,7 +1,7 @@
 // 京淼面诊平台 · 共享 Supabase 客户端
 // 注意：这里只放 anon（publishable）key，绝不放 service_role key
-const SUPABASE_URL = 'https://tdpfhzevydqojxlllefx.supabase.co';
-const SUPABASE_ANON = 'sb_publishable_eNxxyBBCWtzUmMGKeBdT3A_lYQ9IA8D';
+const SUPABASE_URL = 'https://cqphcwyyyuzydlhaiicw.supabase.co';
+const SUPABASE_ANON = 'sb_publishable_EwRg-Znt3Fx3QBOmKdHk4w_1QiB0Ij9';
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
