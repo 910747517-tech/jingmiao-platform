@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>京淼面诊平台 · 登录</title>
 <style>
   *{box-sizing:border-box;}
@@ -14,6 +14,7 @@
   .box input{width:100%; padding:11px 12px; margin-bottom:14px; border:1px solid #ddd; border-radius:9px; font:inherit; font-size:14px;}
   .box input:focus{outline:none; border-color:#C0392B;}
   .box button{width:100%; padding:12px; background:#C0392B; color:#fff; border:none; border-radius:9px; font-size:15px; font-weight:700; cursor:pointer;}
+  .box button.secondary{margin-top:9px;background:#fff;color:#8e473c;border:1px solid #dbc9c2;}
   .box button:hover{filter:brightness(.95);}
   #msg{color:#c0392b; font-size:13px; min-height:18px; text-align:center; margin-top:8px;}
   .hint{font-size:12px; color:#aaa; text-align:center; margin-top:14px;}
@@ -28,8 +29,9 @@
     <input id="email" type="email" placeholder="登录邮箱" value="">
     <input id="password" type="password" placeholder="密码" value="">
     <button onclick="doLogin()">登 录</button>
+    <button class="secondary" onclick="doRegister()">首次使用 · 创建门店账号</button>
     <div id="msg"></div>
-    <div class="hint">门店账号请向平台方（京淼）获取</div>
+    <div class="hint">首次使用请用门店登记邮箱创建账号，密码由你本人设置。</div>
   </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="app.js"></script>
@@ -41,9 +43,13 @@
     if(data.session){ route(data.session.user.id); }
   });
   async function route(uid){
-    const { data:su } = await sb.from('store_users').select('role').eq('id',uid).single();
-    if(!su){ msg('账号未关联门店'); await sb.auth.signOut(); return; }
-    location.href = su.role==='platform' ? 'admin.html' : 'dashboard.html';
+    let { data:su } = await sb.from('store_users').select('role').eq('id',uid).maybeSingle();
+    if(!su){
+      const { error }=await sb.rpc('claim_store');
+      if(error){ msg('账号未关联门店：请使用门店登记邮箱'); await sb.auth.signOut(); return; }
+      ({data:su}=await sb.from('store_users').select('role').eq('id',uid).single());
+    }
+    location.href='dashboard.html';
   }
   async function doLogin(){
     msg(''); const e=emailEl.value.trim(), p=pwEl.value;
@@ -51,6 +57,14 @@
     const { data, error } = await sb.auth.signInWithPassword({ email:e, password:p });
     if(error){ msg('登录失败：'+error.message); return; }
     route(data.user.id);
+  }
+  async function doRegister(){
+    msg(''); const e=emailEl.value.trim(), p=pwEl.value;
+    if(!e||p.length<8){ msg('请输入登记邮箱，并设置至少8位密码'); return; }
+    const { data,error }=await sb.auth.signUp({email:e,password:p});
+    if(error){ msg('创建失败：'+error.message); return; }
+    if(data.session){ route(data.user.id); }
+    else msg('验证邮件已发送，请到邮箱确认后再登录');
   }
 </script>
 </body>
