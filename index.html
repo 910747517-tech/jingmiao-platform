@@ -85,6 +85,14 @@
   .required{color:var(--brand);}
   .assessment-box{border:1px solid var(--line); border-radius:10px; padding:12px; margin:10px 0; background:#fff;}
   .assessment-box .sub-title{margin-top:0;}
+  .archive-mode .toolbar .archive-link,.archive-mode .toolbar button.primary{display:none;}
+  .archive-mode #saved{min-width:0;padding:5px 9px;border:1px solid rgba(255,255,255,.45);border-radius:7px;color:#fff;font-weight:700;white-space:nowrap;}
+  .archive-mode input,.archive-mode textarea,.archive-mode select{pointer-events:none;opacity:1;color:var(--ink);-webkit-text-fill-color:var(--ink);}
+  .archive-mode .chk,.archive-mode .photo-frame{cursor:default;}
+  .archive-mode .photo-frame{border-style:solid;}
+  .archive-mode .photo-frame.has-photo .hint{display:none;}
+  .archive-mode .required{display:none;}
+  .archive-mode .trust-note b::before{content:'历史记录 · ';}
   @media (max-width:640px){body{overflow-x:hidden}.toolbar{justify-content:flex-end;flex-wrap:wrap}.toolbar .brand{width:100%;margin-right:0}.toolbar #saved{margin-right:auto}.toolbar .archive-link{display:none}.page{width:calc(100% - 24px);max-width:none;margin:18px 12px 60px;padding:18px 14px;overflow:hidden}.section-nav{margin-left:-2px; margin-right:-2px;} .infobar{grid-template-columns:repeat(2,1fr);} .face-wrap{grid-template-columns:1fr;} .checks.g2{grid-template-columns:repeat(2,1fr);}table.wide{width:100%;max-width:100%;contain:inline-size}}
   @media (pointer:coarse){.toolbar button,.section-nav a,.chk{min-height:44px;} .chk{padding:6px 8px;} select.f,input.f{min-height:42px;}}
 </style>
@@ -470,7 +478,9 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="app.js"></script>
 <script>
-  const slug = new URLSearchParams(location.search).get('store') || 'demo';
+  const params = new URLSearchParams(location.search);
+  const slug = params.get('store') || 'demo';
+  const archiveMode = params.get('archive') === '1';
   const LOCAL_DEMO_TENANT = {id:'local-demo', slug:'demo', brand_name:'京淼', primary_color:'#C0392B', logo_url:null, localOnly:true};
   const DRAFT_VERSION = 'v3';
   let tenant = null;
@@ -497,9 +507,16 @@
     if(!tenant){ document.getElementById('loadMsg').textContent='门店数据暂时无法加载（标识：'+slug+'），请检查云端配置'; return; }
     applyBrand(tenant);
     document.getElementById('archiveLink').href='dashboard.html'+(localDemo?'?demo=1':'');
+    if(archiveMode){
+      document.body.classList.add('archive-mode');
+      document.getElementById('saved').textContent='历史面诊 · 只读';
+      $all().forEach(el=>el.disabled=true);
+      document.querySelectorAll('details.fast-group').forEach(item=>item.open=true);
+    }
     document.getElementById('loadMsg').style.display='none';
     document.getElementById('page').style.display='block';
-    loadLocal();
+    if(archiveMode) window.parent.postMessage({type:'jingmiao-archive-ready'}, location.origin);
+    else loadLocal();
   }
 
   function applyBrand(t){
@@ -545,7 +562,40 @@
       const b64=d['face_'+p]; if(b64){ const f=document.querySelector('.photo-frame[data-pos="'+p+'"]'); if(f){ f.dataset.b64=b64; f.querySelector('img').src=b64; } }
     });
   }
-  $all().forEach(el=>{ el.addEventListener('input',save); el.addEventListener('change',save); });
+  if(!archiveMode) $all().forEach(el=>{ el.addEventListener('input',save); el.addEventListener('change',save); });
+
+  function applyArchiveData(payload){
+    if(!archiveMode) return;
+    const d=payload?.data||{};
+    $all().forEach(el=>{
+      if(el.type==='file') return;
+      if(el.type==='checkbox'||el.type==='radio'){
+        const selected=Array.isArray(d[el.name])?d[el.name]:d[el.name]!==undefined&&d[el.name]!==null?[String(d[el.name])]:[];
+        el.checked=selected.includes(el.value);
+      }else el.value=d[el.name]!==undefined&&d[el.name]!==null?String(d[el.name]):'';
+    });
+    const age=d.age||calcAge(d.birth||'');
+    document.getElementById('ageShow').textContent=age!==''?('年龄：'+age+' 岁'):'未填写出生日期';
+    const emptyPixel='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
+    const labels={front:'正面照',left:'左侧面照',right:'右侧面照'};
+    ['front','left','right'].forEach(p=>{
+      const frame=document.querySelector('.photo-frame[data-pos="'+p+'"]'),b64=d['face_'+p];
+      if(!frame) return;
+      frame.classList.toggle('has-photo',!!b64);
+      frame.querySelector('img').src=b64||emptyPixel;
+      frame.querySelector('.hint').innerHTML=labels[p]+'<br>（'+(b64?'已上传':'未上传')+'）';
+    });
+    const title=(tenant?.brand_name||'专业面诊表')+' · 历史面诊表';
+    document.title=title;
+    document.getElementById('docTitle').textContent=title;
+    document.getElementById('foot').textContent=title;
+    window.scrollTo({top:0,behavior:'instant'});
+  }
+
+  window.addEventListener('message',event=>{
+    if(!archiveMode||event.origin!==location.origin||event.source!==window.parent||event.data?.type!=='jingmiao-archive-data') return;
+    applyArchiveData(event.data.payload);
+  });
 
   // 年龄：出生日期 -> 自动计算
   function calcAge(birth){
