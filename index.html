@@ -572,7 +572,13 @@
       if(el.type==='checkbox'||el.type==='radio'){
         const selected=Array.isArray(d[el.name])?d[el.name]:d[el.name]!==undefined&&d[el.name]!==null?[String(d[el.name])]:[];
         el.checked=selected.includes(el.value);
-      }else el.value=d[el.name]!==undefined&&d[el.name]!==null?String(d[el.name]):'';
+      }else{
+        const filled=d[el.name]!==undefined&&d[el.name]!==null&&String(d[el.name]).trim()!=='';
+        el.value=filled?String(d[el.name]):'';
+        el.classList.toggle('archive-empty',!filled);
+        if(!filled&&el.tagName==='SELECT'&&el.options[0])el.options[0].textContent='未填写';
+        else if(!filled&&el.tagName!=='SELECT')el.placeholder='未填写';
+      }
     });
     const age=d.age||calcAge(d.birth||'');
     document.getElementById('ageShow').textContent=age!==''?('年龄：'+age+' 岁'):'未填写出生日期';
