@@ -15,7 +15,7 @@
   *{box-sizing:border-box;}
   ::selection{background:var(--brand); color:#fff;}
   body{margin:0; background:#eee; color:var(--ink);
-    font-family:"Microsoft YaHei","PingFang SC","Hiragino Sans GB",sans-serif; font-size:14px; line-height:1.5;}
+    font-family:"Hiragino Sans GB","PingFang SC","Microsoft YaHei",sans-serif; font-size:14px; line-height:1.5;}
   .toolbar{position:sticky; top:0; z-index:50; display:flex; gap:10px; align-items:center; justify-content:center;
     padding:10px 14px; background:var(--brand); border-bottom:1px solid rgba(0,0,0,.1); box-shadow:0 1px 6px rgba(0,0,0,.06);}
   .toolbar .brand{font-weight:700; color:#fff; margin-right:auto; font-size:14px; display:flex; align-items:center; gap:8px;}
@@ -72,7 +72,16 @@
   .photo-frame img{max-width:100%; max-height:100%; object-fit:cover;}
   .photo-frame input{display:none;}
   .photo-frame .hint{padding:0 10px;}
-  @media print{body{background:#fff;} .toolbar,.section-nav{display:none;} .page{box-shadow:none; margin:0; max-width:100%; padding:0 6mm;} input.f,textarea.f{border-bottom:1px solid #bbb;} .photo-frame{border:1px solid #999;}}
+  @media print{
+    body{background:#fff; font-family:"Hiragino Sans GB","PingFang SC",sans-serif; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+    .toolbar,.section-nav{display:none;}
+    .page{box-shadow:none; margin:0; max-width:100%; padding:0 6mm;}
+    .page,.page *{color:#2c2c2a !important; -webkit-text-fill-color:#2c2c2a !important; text-shadow:none !important;}
+    input,textarea,select,button{font-family:"Hiragino Sans GB","PingFang SC",sans-serif !important; opacity:1 !important;}
+    input.f,textarea.f{border-bottom:1px solid #888;}
+    .chk:has(input:checked){background:#fff !important; border:1px solid #555; box-shadow:none; padding:1px 7px;}
+    .photo-frame{border:1px solid #999;}
+  }
   .foot{text-align:center; color:#bbb; font-size:12px; margin-top:24px;}
   #loadMsg{padding:40px; text-align:center; color:#999;}
   #modeMsg{display:none; max-width:840px; margin:12px auto 0; padding:8px 12px; border-radius:6px; background:#fff7e6; color:#9a6500; font-size:12px; text-align:center;}
