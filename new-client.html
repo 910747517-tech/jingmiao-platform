@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>新客快速面诊</title>
+<style>
+  :root{
+    --brand:#b94537;--brand-dark:#843128;--brand-wash:#fbf1ed;
+    --ink:#292522;--sub:#746c66;--line:#e8e1da;--paper:#fffdf9;--ground:#f3efe9;
+    --risk:#9b5d20;--risk-wash:#fff7e8;--ok:#346b49;--ok-wash:#eef7f0;
+    --shadow:0 16px 42px rgba(0,0,0,.1);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth;scroll-padding-top:72px}
+  ::selection{background:var(--brand);color:#fff}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;font-size:16px;line-height:1.55;padding-bottom:calc(106px + env(safe-area-inset-bottom))}
+  button,input,select,textarea{font:inherit;color:inherit}
+  button,a,label,summary{-webkit-tap-highlight-color:transparent}
+  a{color:inherit}
+  .topbar{position:sticky;top:0;z-index:60;background:rgba(255,253,249,.96);border-bottom:1px solid var(--line);box-shadow:0 5px 16px rgba(0,0,0,.06)}
+  .topin{max-width:920px;margin:auto;min-height:58px;padding:9px 14px;display:flex;align-items:center;gap:10px}
+  .wordmark{font-weight:800;color:var(--brand);letter-spacing:.04em;white-space:nowrap}
+  .topmeta{margin-left:auto;color:var(--sub);font-size:12px;white-space:nowrap}
+  .toplink{min-height:40px;display:flex;align-items:center;padding:7px 11px;border:1px solid var(--line);border-radius:9px;text-decoration:none;font-size:13px;background:#fff}
+  .progress{height:3px;background:#eadfd7;overflow:hidden}
+  .progress i{display:block;width:100%;height:100%;background:var(--brand);transform:scaleX(0);transform-origin:left;transition:transform .18s ease-out}
+  main{width:min(920px,calc(100% - 24px));margin:18px auto 46px;background:var(--paper);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+  .hero{padding:28px 24px 22px;border-bottom:1px solid var(--line);background:#fff}
+  .hero-row{display:flex;align-items:flex-start;gap:18px}
+  .hero h1{margin:0;color:var(--brand);font-size:clamp(24px,5vw,34px);line-height:1.2;letter-spacing:-.02em}
+  .hero p{margin:9px 0 0;max-width:62ch;color:var(--sub);font-size:14px}
+  .duration{margin-left:auto;flex:none;padding:7px 10px;border-radius:999px;background:var(--ok-wash);color:var(--ok);font-size:12px;font-weight:700;white-space:nowrap}
+  .principle{margin-top:18px;padding:11px 13px;background:var(--brand-wash);border-radius:10px;color:#70463f;font-size:13px}
+  .principle b{color:var(--brand-dark)}
+  .stepnav{position:sticky;top:61px;z-index:45;display:flex;gap:7px;overflow-x:auto;padding:9px 14px;background:rgba(255,253,249,.97);border-bottom:1px solid var(--line);scrollbar-width:none}
+  .stepnav::-webkit-scrollbar{display:none}
+  .stepnav a{flex:none;min-height:40px;display:flex;align-items:center;padding:7px 11px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--sub);text-decoration:none;font-size:13px;white-space:nowrap}
+  .stepnav a.active{border-color:var(--brand);background:var(--brand-wash);color:var(--brand-dark);font-weight:700}
+  .formbody{padding:0 24px 28px}
+  .section{padding:28px 0 30px;border-bottom:1px solid var(--line)}
+  .section:last-child{border-bottom:0}
+  .section-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:18px}
+  .section-num{flex:none;width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:var(--brand);color:#fff;font-size:14px;font-weight:800;font-variant-numeric:tabular-nums}
+  .section h2{margin:0;font-size:19px;line-height:1.3}
+  .section-head p{margin:4px 0 0;color:var(--sub);font-size:13px}
+  .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+  .grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .field{min-width:0}
+  .field.full{grid-column:1/-1}
+  .field label,.field-title{display:block;margin-bottom:6px;color:#5e5651;font-size:13px;font-weight:700}
+  .required{color:var(--brand)}
+  .control{width:100%;min-height:46px;border:1px solid #dcd4cc;border-radius:10px;background:#fff;padding:10px 12px;outline:none;transition:border-color .15s,box-shadow .15s}
+  textarea.control{min-height:76px;resize:vertical}
+  .control:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(185,69,55,.13)}
+  .control::placeholder{color:#9a928b}
+  .choices{display:flex;flex-wrap:wrap;gap:8px}
+  .choices.grid-choice{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+  .choice{position:relative;min-width:0;cursor:pointer}
+  .choice input{position:absolute;opacity:0;pointer-events:none}
+  .choice span{min-height:46px;display:flex;align-items:center;justify-content:center;padding:9px 12px;border:1px solid #ddd6cf;border-radius:10px;background:#fff;color:#544d48;font-size:14px;text-align:center;line-height:1.35;transition:border-color .15s,background .15s,color .15s,transform .15s}
+  .choice input:checked+span{border-color:#171514;background:#171514;color:#fff}
+  .choice input:focus-visible+span{outline:3px solid rgba(185,69,55,.22);outline-offset:2px}
+  .choice:active span{transform:scale(.985)}
+  .note{margin-top:10px;color:var(--sub);font-size:12px}
+  .riskbox{padding:14px;border:1px solid #edddc5;border-radius:12px;background:var(--risk-wash)}
+  .riskbox .field-title{color:#704a22}
+  #riskDetail{display:none;margin-top:14px}
+  #riskDetail.show{display:block}
+  .observation{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(260px,.85fr);gap:18px}
+  .photo-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+  .photo{position:relative;height:154px;border:1.5px dashed #cfc5bc;border-radius:12px;background:#f9f6f2;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;text-align:center;color:#817870;font-size:12px}
+  .photo input{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .photo img{display:none;width:100%;height:100%;object-fit:cover}
+  .photo.has-photo img{display:block}
+  .photo.has-photo span{display:none}
+  .photo:focus-within{outline:3px solid rgba(185,69,55,.22);outline-offset:2px}
+  .decision{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+  .decision .choice span{align-items:flex-start;justify-content:flex-start;min-height:96px;padding:12px;text-align:left}
+  .decision .choice b{display:block;margin-bottom:4px;font-size:14px}
+  .decision .choice small{display:block;color:inherit;opacity:.74;font-size:12px;font-weight:400}
+  .result-note{margin-top:18px;padding:13px 14px;border-radius:12px;background:var(--ok-wash);color:#315d42;font-size:13px}
+  .bottom-actions{position:fixed;left:0;right:0;bottom:0;z-index:70;background:var(--brand);box-shadow:0 -5px 20px rgba(0,0,0,.18);padding:6px 12px calc(8px + env(safe-area-inset-bottom))}
+  .actionin{max-width:920px;margin:auto;display:grid;grid-template-columns:150px 1fr 1fr 1.15fr;gap:8px;align-items:center}
+  #saved{color:rgba(255,255,255,.86);font-size:12px;text-align:center}
+  .action,.actionlink{min-height:46px;border:1px solid rgba(255,255,255,.52);border-radius:10px;background:rgba(255,255,255,.12);color:#fff;display:flex;align-items:center;justify-content:center;padding:8px 10px;text-align:center;text-decoration:none;font-size:13px;cursor:pointer}
+  .action.primary{background:#fff;color:var(--brand-dark);border-color:#fff;font-weight:800}
+  .action:disabled{opacity:.58;cursor:wait}
+  .toast{position:fixed;left:50%;bottom:calc(112px + env(safe-area-inset-bottom));z-index:100;max-width:calc(100% - 28px);transform:translate(-50%,15px);opacity:0;background:#272320;color:#fff;padding:11px 17px;border-radius:10px;font-size:14px;text-align:center;transition:.2s;pointer-events:none}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  #loadMsg{padding:52px 18px;text-align:center;color:var(--sub)}
+  #modeMsg{display:none;margin:12px auto 0;width:min(920px,calc(100% - 24px));padding:9px 12px;border-radius:9px;background:var(--risk-wash);color:var(--risk);font-size:12px;text-align:center}
+  .archive-mode .submit-btn,.archive-mode .deep-btn,.archive-mode .archive-link{display:none}
+  .archive-mode .actionin{grid-template-columns:1fr 1fr}
+  .archive-mode input,.archive-mode textarea,.archive-mode select{pointer-events:none;opacity:1;-webkit-text-fill-color:var(--ink)}
+  .archive-mode .choice,.archive-mode .photo{pointer-events:none;cursor:default}
+  .archive-mode .choice input:not(:checked)+span{opacity:.55}
+  @media(max-width:720px){
+    body{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
+    .topin{padding:9px 12px}.topmeta{display:none}.toplink{font-size:12px;padding:7px 9px}
+    main{width:100%;margin:0;border-radius:0;box-shadow:none}
+    .hero{padding:22px 14px 18px}.hero-row{display:block}.duration{display:inline-block;margin:12px 0 0}.principle{margin-top:14px}
+    .stepnav{top:59px;padding:8px 12px}
+    .formbody{padding:0 14px 22px}.section{padding:24px 0 26px}.section-head{gap:10px}
+    .grid,.grid.three{grid-template-columns:1fr}.field.full{grid-column:auto}
+    .choices.grid-choice{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .observation{grid-template-columns:1fr}.photo-list{grid-template-columns:1fr}.photo{height:190px}
+    .decision{grid-template-columns:1fr 1fr}
+    .actionin{grid-template-columns:repeat(3,minmax(0,1fr))}
+    #saved{grid-column:1/-1;line-height:1.15}
+    .action,.actionlink{padding:7px 5px;font-size:13px}
+  }
+  @media(max-width:360px){.choices.grid-choice,.decision{grid-template-columns:1fr}.toplink.deep-top{display:none}}
+  @media(pointer:coarse){.toplink,.stepnav a,.choice span,.action,.actionlink{min-height:44px}}
+  @media print{
+    body{background:#fff;padding:0;font-size:12px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .topbar,.stepnav,.bottom-actions,.toast,#modeMsg{display:none!important}
+    main{width:100%;margin:0;border-radius:0;box-shadow:none}.hero{padding:0 0 14px}.formbody{padding:0}
+    .section{padding:16px 0;break-inside:avoid}.control{min-height:34px;padding:6px 8px}.choice span{min-height:34px;padding:6px 8px}
+  }
+</style>
+</head>
+<body>
+<!--
+THESIS: 新客面诊只完成必要判断与第一步共识，拒绝把完整会员规划压给第一次到店的顾客。
+OWN-WORLD: 延续京淼红、纸张暖白与克制线框；大触控选择、清晰留白和底部行动区组成操作语言。
+STORY: 规划师先记录主诉，再排除风险、观察状态、形成初步判断，最后与顾客确认一个可执行起点。
+FIRST VIEWPORT: 品牌与 5–8 分钟承诺在上，六步导航紧随；信息单列下行，提交与升级入口始终在拇指范围。
+FORM: 既有京淼表单系统的快速面诊扩展，Operate 模式，按已确认的六段流程直接实现，seed key EXTENSION-QUICK-6STEP-V1。
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+-->
+<header class="topbar">
+  <div class="topin"><div class="wordmark" id="brandName">京淼</div><div class="topmeta">新客快速面诊 · 填写自动保存</div><a class="toplink archive-link" id="archiveLink" href="dashboard.html">客户档案</a><a class="toplink deep-top" id="deepTop" href="#" onclick="openDeep(event)">深度面诊</a></div>
+  <div class="progress"><i id="progressBar"></i></div>
+</header>
+<div id="modeMsg"></div>
+<main id="page" style="display:none">
+  <div class="hero">
+    <div class="hero-row"><div><h1 id="docTitle">新客快速面诊</h1><p>先听清顾客最在意的问题，完成必要的安全判断，再给出一个能执行、能复评的第一步。</p></div><span class="duration">预计 5–8 分钟</span></div>
+    <div class="principle"><b>面诊原则：</b>本次只确认优先级和起步方式；需要更深入分析时，再升级完整面诊，不让新顾客一开始就承受过多问题。</div>
+  </div>
+  <nav class="stepnav" aria-label="快速面诊步骤">
+    <a class="active" href="#basic">1 基础资料</a><a href="#concern">2 核心诉求</a><a href="#risk">3 安全边界</a><a href="#observe">4 快速观察</a><a href="#assessment">5 初步判断</a><a href="#start">6 确认第一步</a>
+  </nav>
+  <div class="formbody">
+    <section class="section" id="basic">
+      <div class="section-head"><span class="section-num">1</span><div><h2>基础资料</h2><p>只记录后续查找和联系真正需要的信息。</p></div></div>
+      <div class="grid three">
+        <div class="field"><label>顾客姓名 <span class="required">*</span></label><input class="control" name="name" autocomplete="name" required></div>
+        <div class="field"><label>联系电话 <span class="required">*</span></label><input type="tel" class="control" name="phone" inputmode="tel" autocomplete="tel" required></div>
+        <div class="field"><label>年龄</label><input type="number" class="control" name="age" inputmode="numeric" min="1" max="120" placeholder="岁"></div>
+        <div class="field"><label>面诊日期</label><input type="date" class="control" name="firstDate"></div>
+        <div class="field"><label>皮肤规划师</label><select class="control" name="consultant"><option value="">请选择</option><option>Ami</option><option>媛媛</option><option>Miu</option></select></div>
+        <div class="field"><label>到店渠道</label><select class="control" name="source"><option value="">请选择</option><option>老客转介绍</option><option>朋友同行</option><option>抖音/小红书</option><option>美团/大众点评</option><option>路过进店</option><option>其他</option></select></div>
+        <div class="field"><label>可接受护理频率</label><select class="control" name="booking"><option value="">请选择</option><option>暂不确定</option><option>每月1次</option><option>每月2次</option><option>每月3次</option><option>每周1次</option></select></div>
+      </div>
+    </section>
+
+    <section class="section" id="concern">
+      <div class="section-head"><span class="section-num">2</span><div><h2>这次最想解决什么</h2><p>先锁定一个主问题，再听顾客自己的描述。</p></div></div>
+      <div class="field full"><span class="field-title">本次最想优先解决 <span class="required">*</span></span><div class="choices grid-choice">
+        <label class="choice"><input type="radio" name="primary_concern" value="敏感泛红/屏障"><span>敏感泛红</span></label>
+        <label class="choice"><input type="radio" name="primary_concern" value="痘痘闭口/油脂"><span>痘痘闭口</span></label>
+        <label class="choice"><input type="radio" name="primary_concern" value="色斑色沉/暗黄"><span>色斑暗黄</span></label>
+        <label class="choice"><input type="radio" name="primary_concern" value="毛孔粗糙/肤质"><span>毛孔粗糙</span></label>
+        <label class="choice"><input type="radio" name="primary_concern" value="松弛细纹/轮廓"><span>松弛细纹</span></label>
+        <label class="choice"><input type="radio" name="primary_concern" value="眼周问题"><span>眼周问题</span></label>
+        <label class="choice"><input type="radio" name="primary_concern" value="其他"><span>其他</span></label>
+      </div></div>
+      <div class="grid" style="margin-top:16px">
+        <div class="field"><label>大概从什么时候开始？</label><input class="control" name="concern_start" placeholder="例如：半年、换季后、项目后"></div>
+        <div class="field"><label>什么情况下容易加重或反复？</label><input class="control" name="trigger" placeholder="例如：熬夜、经期、换产品"></div>
+        <div class="field"><label>对生活或形象最大的影响</label><textarea class="control" name="impact" placeholder="用顾客自己的话记录"></textarea></div>
+        <div class="field"><label>最期待先看到什么变化</label><textarea class="control" name="expectation" placeholder="先确定可观察的第一阶段目标"></textarea></div>
+      </div>
+    </section>
+
+    <section class="section" id="risk">
+      <div class="section-head"><span class="section-num">3</span><div><h2>快速安全筛查</h2><p>风险边界优先于项目推荐；有疑问时先暂缓，不贸然承诺。</p></div></div>
+      <div class="riskbox"><span class="field-title">目前是否有以下情况</span><div class="choices grid-choice">
+        <label class="choice"><input type="checkbox" name="risk" value="正在过敏/破损/炎症期"><span>过敏、破损或炎症期</span></label>
+        <label class="choice"><input type="checkbox" name="risk" value="有产品/药物过敏史"><span>产品或药物过敏史</span></label>
+        <label class="choice"><input type="checkbox" name="risk" value="近期做过光电/刷酸/注射"><span>近期光电、刷酸或注射</span></label>
+        <label class="choice"><input type="checkbox" name="risk" value="正在使用药膏/处方药"><span>正在使用药膏或处方药</span></label>
+        <label class="choice"><input type="checkbox" name="risk" value="孕期/哺乳期/经期"><span>孕期、哺乳期或经期</span></label>
+        <label class="choice"><input type="checkbox" name="risk" value="以上均无"><span>以上均无</span></label>
+      </div><div class="field" id="riskDetail"><label>请记录具体项目、时间和反应</label><textarea class="control" name="risk_detail" placeholder="例如：上周做过光子，当前仍有泛红"></textarea></div></div>
+    </section>
+
+    <section class="section" id="observe">
+      <div class="section-head"><span class="section-num">4</span><div><h2>快速皮肤观察</h2><p>记录今天看到的状态，不把观察直接写成医疗诊断。</p></div></div>
+      <div class="observation"><div>
+        <div class="field"><span class="field-title">基础肤质</span><div class="choices">
+          <label class="choice"><input type="radio" name="skin" value="干性"><span>干性</span></label><label class="choice"><input type="radio" name="skin" value="油性"><span>油性</span></label><label class="choice"><input type="radio" name="skin" value="混合偏干"><span>混合偏干</span></label><label class="choice"><input type="radio" name="skin" value="混合偏油"><span>混合偏油</span></label><label class="choice"><input type="radio" name="skin" value="中性"><span>中性</span></label>
+        </div></div>
+        <div class="field" style="margin-top:16px"><span class="field-title">当前状态（可多选）</span><div class="choices">
+          <label class="choice"><input type="checkbox" name="current_state" value="缺水"><span>缺水</span></label><label class="choice"><input type="checkbox" name="current_state" value="出油"><span>出油</span></label><label class="choice"><input type="checkbox" name="current_state" value="堵塞"><span>堵塞</span></label><label class="choice"><input type="checkbox" name="current_state" value="敏感"><span>敏感</span></label><label class="choice"><input type="checkbox" name="current_state" value="炎症"><span>炎症</span></label><label class="choice"><input type="checkbox" name="current_state" value="色沉"><span>色沉</span></label><label class="choice"><input type="checkbox" name="current_state" value="粗糙"><span>粗糙</span></label><label class="choice"><input type="checkbox" name="current_state" value="松弛"><span>松弛</span></label>
+        </div></div>
+        <div class="field" style="margin-top:16px"><span class="field-title">主要问题区域（可多选）</span><div class="choices">
+          <label class="choice"><input type="checkbox" name="problem_zone" value="额头"><span>额头</span></label><label class="choice"><input type="checkbox" name="problem_zone" value="鼻周"><span>鼻周</span></label><label class="choice"><input type="checkbox" name="problem_zone" value="面颊"><span>面颊</span></label><label class="choice"><input type="checkbox" name="problem_zone" value="下巴"><span>下巴</span></label><label class="choice"><input type="checkbox" name="problem_zone" value="眼周"><span>眼周</span></label>
+        </div></div>
+        <div class="field" style="margin-top:16px"><label>规划师观察到的1–3个重点</label><textarea class="control" name="observation" placeholder="按优先级记录，不求面面俱到"></textarea></div>
+      </div><div><span class="field-title">面部照片（可选）</span><div class="photo-list">
+        <label class="photo" data-pos="front" tabindex="0"><input type="file" accept="image/*" capture="user"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="正面照"><span>上传正面照</span></label>
+        <label class="photo" data-pos="left" tabindex="0"><input type="file" accept="image/*" capture="user"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="左侧面照"><span>上传左侧面照</span></label>
+        <label class="photo" data-pos="right" tabindex="0"><input type="file" accept="image/*" capture="user"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="右侧面照"><span>上传右侧面照</span></label>
+      </div><div class="note">照片只用于本次记录和后续复评，请先获得顾客同意。</div></div></div>
+    </section>
+
+    <section class="section" id="assessment">
+      <div class="section-head"><span class="section-num">5</span><div><h2>专业初步判断</h2><p>用顾客听得懂的话解释“先解决什么、为什么”。</p></div></div>
+      <div class="grid">
+        <div class="field"><label>目前最主要的问题</label><textarea class="control" name="quick_summary" placeholder="只写最影响当前状态的问题"></textarea></div>
+        <div class="field"><label>可能相关的原因</label><textarea class="control" name="possible_factors" placeholder="区分观察事实与推测，不做医疗诊断"></textarea></div>
+        <div class="field full"><label>为什么建议先解决这个问题</label><textarea class="control" name="first_reason" placeholder="说明顺序和取舍，让顾客理解不是项目越多越好"></textarea></div>
+      </div>
+    </section>
+
+    <section class="section" id="start">
+      <div class="section-head"><span class="section-num">6</span><div><h2>确认第一步</h2><p>面诊结束时，只确认一个顾客愿意开始并能复评的行动。</p></div></div>
+      <span class="field-title">建议从哪种方式开始</span><div class="decision">
+        <label class="choice"><input type="radio" name="start_mode" value="先调整居家护肤"><span><b>A · 居家调整</b><small>先修正清洁、保湿、防晒或使用顺序</small></span></label>
+        <label class="choice"><input type="radio" name="start_mode" value="先进行一次体验护理"><span><b>B · 体验护理</b><small>用一次温和护理观察皮肤反应</small></span></label>
+        <label class="choice"><input type="radio" name="start_mode" value="先做仪器检测或深度面诊"><span><b>C · 深度评估</b><small>问题复杂时进入完整检测与规划</small></span></label>
+        <label class="choice"><input type="radio" name="start_mode" value="暂缓项目建议就医"><span><b>D · 暂缓项目</b><small>超出门店边界时先建议就医</small></span></label>
+      </div>
+      <div class="grid" style="margin-top:16px">
+        <div class="field"><label>本次建议项目或护理方向</label><input class="control" name="recommendation" placeholder="填写方向，不用套餐代替方案"></div>
+        <div class="field"><label>建议频率</label><input class="control" name="frequency" placeholder="例如：先做1次，7天后复评"></div>
+        <div class="field"><label>居家先调整的1–3件事</label><textarea class="control" name="home_steps" placeholder="越具体越容易执行"></textarea></div>
+        <div class="field"><label>预计观察时间</label><input class="control" name="window" placeholder="例如：先观察7–14天"></div>
+        <div class="field"><label>下次复评日期</label><input type="date" class="control" name="review_date"></div>
+        <div class="field"><label>顾客确认愿意执行的第一步</label><textarea class="control" name="customer_agreement" placeholder="用顾客确认后的话记录"></textarea></div>
+      </div>
+      <div class="result-note">如果顾客的问题复杂、需要完整仪器检测或长期规划，可点击“转深度面诊”。已填写的基础资料会自动带入，不需要重新询问。</div>
+    </section>
+  </div>
+</main>
+<div id="loadMsg">正在加载门店信息…</div>
+<div class="bottom-actions"><div class="actionin"><span id="saved">填写自动保存</span><a class="actionlink archive-link" id="archiveBottom" href="dashboard.html">客户档案</a><button class="action deep-btn" type="button" onclick="openDeep(event)">转深度面诊</button><button class="action primary submit-btn" id="submitBtn" type="button" onclick="submitForm()">提交到门店</button><button class="action archive-print" type="button" onclick="window.print()" style="display:none">导出 PDF</button></div></div>
+<div class="toast" id="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js"></script>
+<script>
+  const params=new URLSearchParams(location.search);
+  const slug=params.get('store')||'demo';
+  const archiveMode=params.get('archive')==='1';
+  const LOCAL_DEMO_TENANT={id:'local-demo',slug:'demo',brand_name:'京淼',primary_color:'#b94537',localOnly:true};
+  const DRAFT_VERSION='quick-v1';
+  let tenant=null,localDemo=false;
+  const allFields=()=>document.querySelectorAll('#page input,#page textarea,#page select');
+
+  async function init(){
+    const localPreview=(location.protocol==='file:'||['127.0.0.1','localhost'].includes(location.hostname))&&slug==='demo';
+    if(!localPreview){
+      try{
+        const request=sb.from('tenants').select('id,slug,brand_name,primary_color,logo_url,active').eq('slug',slug).single();
+        const timeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error('云端连接超时')),5000));
+        const {data,error}=await Promise.race([request,timeout]);
+        if(!error&&data)tenant=data;
+      }catch(error){console.warn('门店加载失败：',error)}
+    }
+    if(!tenant&&localPreview){tenant=LOCAL_DEMO_TENANT;localDemo=true;const msg=document.getElementById('modeMsg');msg.textContent='本地演示模式：内容只保存在当前浏览器，不会上传门店云端。';msg.style.display='block'}
+    if(!tenant){document.getElementById('loadMsg').textContent='门店数据暂时无法加载（标识：'+slug+'），请检查云端配置';return}
+    applyBrand();
+    enhanceAccessibility();
+    if(archiveMode){setupArchiveMode()}else{loadDraft();bindAutosave()}
+    if(!archiveMode)document.querySelector('[name="firstDate"]').value ||= new Date().toISOString().slice(0,10);
+    document.getElementById('loadMsg').style.display='none';
+    document.getElementById('page').style.display='block';
+    updateRiskDetail();
+    if(archiveMode)window.parent.postMessage({type:'jingmiao-archive-ready'},location.origin);
+  }
+  function applyBrand(){
+    const brand=tenant.brand_name||'京淼';
+    document.documentElement.style.setProperty('--brand',tenant.primary_color||'#b94537');
+    document.getElementById('brandName').textContent=brand;
+    document.getElementById('docTitle').textContent=brand+' · 新客快速面诊';
+    document.title=brand+' · 新客快速面诊';
+    const dash='dashboard.html'+(localDemo?'?demo=1':'');
+    document.querySelectorAll('.archive-link').forEach(link=>link.href=dash);
+  }
+  function enhanceAccessibility(){
+    document.querySelectorAll('.field').forEach((field,index)=>{
+      const label=field.querySelector(':scope > label'),control=field.querySelector(':scope > .control');
+      if(label&&control){control.id ||= 'quick-field-'+(index+1);label.htmlFor=control.id}
+    });
+    document.querySelectorAll('.field-title').forEach((title,index)=>{
+      const group=title.nextElementSibling;
+      if(group&&(group.classList.contains('choices')||group.classList.contains('decision'))){title.id ||= 'quick-group-'+(index+1);group.setAttribute('role','group');group.setAttribute('aria-labelledby',title.id)}
+    });
+  }
+  function collect(){
+    const data={};
+    allFields().forEach(el=>{
+      if(el.type==='checkbox'||el.type==='radio'){data[el.name]=data[el.name]||[];if(el.checked)data[el.name].push(el.value)}
+      else if(el.type!=='file')data[el.name]=el.value;
+    });
+    ['front','left','right'].forEach(pos=>{const frame=document.querySelector('.photo[data-pos="'+pos+'"]');if(frame?.dataset.b64)data['face_'+pos]=frame.dataset.b64});
+    return data;
+  }
+  function save(){
+    if(!tenant||archiveMode)return;
+    localStorage.setItem('facesheet_'+DRAFT_VERSION+'_'+tenant.slug,JSON.stringify(collect()));
+    document.getElementById('saved').textContent='已保存 '+new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
+  }
+  function fill(data){
+    allFields().forEach(el=>{
+      if(el.type==='file')return;
+      if(el.type==='checkbox'||el.type==='radio'){const values=Array.isArray(data[el.name])?data[el.name]:[data[el.name]];el.checked=values.includes(el.value)}
+      else if(data[el.name]!==undefined&&data[el.name]!==null)el.value=String(data[el.name]);
+    });
+    ['front','left','right'].forEach(pos=>{const b64=data['face_'+pos],frame=document.querySelector('.photo[data-pos="'+pos+'"]');if(b64&&frame){frame.dataset.b64=b64;frame.classList.add('has-photo');frame.querySelector('img').src=b64}});
+  }
+  function loadDraft(){try{const raw=localStorage.getItem('facesheet_'+DRAFT_VERSION+'_'+tenant.slug);if(raw)fill(JSON.parse(raw))}catch(error){console.warn('草稿读取失败',error)}}
+  function bindAutosave(){allFields().forEach(el=>{el.addEventListener('input',save);el.addEventListener('change',()=>{save();updateRiskDetail()})})}
+  function updateRiskDetail(){
+    const selected=[...document.querySelectorAll('[name="risk"]:checked')].map(el=>el.value);
+    document.getElementById('riskDetail').classList.toggle('show',selected.some(value=>value!=='以上均无'));
+  }
+  document.querySelectorAll('[name="risk"]').forEach(box=>box.addEventListener('change',()=>{
+    if(box.value==='以上均无'&&box.checked)document.querySelectorAll('[name="risk"]').forEach(other=>{if(other!==box)other.checked=false});
+    else if(box.checked){const none=document.querySelector('[name="risk"][value="以上均无"]');if(none)none.checked=false}
+    updateRiskDetail();save();
+  }));
+  function compressImage(file,maxDim=960,quality=.78){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=event=>{const image=new Image();image.onload=()=>{let width=image.width,height=image.height;if(width>height&&width>maxDim){height=Math.round(height*maxDim/width);width=maxDim}else if(height>maxDim){width=Math.round(width*maxDim/height);height=maxDim}const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;canvas.getContext('2d').drawImage(image,0,0,width,height);resolve(canvas.toDataURL('image/jpeg',quality))};image.onerror=reject;image.src=event.target.result};reader.onerror=reject;reader.readAsDataURL(file)})}
+  document.querySelectorAll('.photo').forEach(frame=>{
+    frame.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();frame.querySelector('input').click()}});
+    frame.querySelector('input').addEventListener('change',event=>{const file=event.target.files[0];if(!file)return;compressImage(file).then(b64=>{frame.dataset.b64=b64;frame.querySelector('img').src=b64;frame.classList.add('has-photo');save()}).catch(()=>showToast('图片处理失败，请重新选择'))});
+  });
+
+  function openDeep(event){
+    event?.preventDefault();
+    if(!tenant)return;
+    const quick=collect(),key='facesheet_v3_'+tenant.slug;
+    let existing={};try{existing=JSON.parse(localStorage.getItem(key)||'{}')}catch(error){}
+    const stateMap={缺水:'缺水紧绷',出油:'油脂旺盛',堵塞:'角化/闭口',敏感:'敏感泛红',炎症:'炎症痘痘',色沉:'色素沉着',松弛:'弹性/轮廓下降'};
+    const deepStates=(quick.current_state||[]).map(value=>stateMap[value]).filter(Boolean);
+    const observationNotes=[quick.source&&'到店渠道：'+quick.source,quick.current_state?.length&&'当前状态：'+quick.current_state.join('、'),quick.problem_zone?.length&&'问题区域：'+quick.problem_zone.join('、'),quick.observation&&'快速观察：'+quick.observation].filter(Boolean).join('\n');
+    const firstPriority=[quick.start_mode,quick.recommendation].filter(Boolean).join('；');
+    const mapped={name:quick.name,phone:quick.phone,age:quick.age,firstDate:quick.firstDate,consultant:quick.consultant,booking:quick.booking,primary_concern:quick.primary_concern,q_start:quick.concern_start,q_repeat:quick.trigger,q_bother:quick.impact,q_expect:quick.expectation,risk:quick.risk,risk_detail:quick.risk_detail,skin:quick.skin,skin_state:deepStates,face_front:quick.face_front,face_left:quick.face_left,face_right:quick.face_right,conclusion_1:quick.quick_summary,m_surface:observationNotes,m_deep:quick.possible_factors,first_priority:firstPriority,first_reason:quick.first_reason,first_window:quick.window,r1_action:quick.home_steps,r1_cycle:quick.frequency,review_date:quick.review_date,customer_agreement:quick.customer_agreement};
+    Object.keys(mapped).forEach(keyName=>{const value=mapped[keyName];if(value!==undefined&&value!==''&&!(Array.isArray(value)&&value.length===0))existing[keyName]=value});
+    localStorage.setItem(key,JSON.stringify(existing));
+    location.href='index.html?store='+encodeURIComponent(tenant.slug);
+  }
+  async function submitForm(){
+    if(!tenant)return showToast('门店尚未加载');
+    const data=collect();
+    if(!String(data.name||'').trim()||!String(data.phone||'').trim()||!(data.primary_concern||[]).length){
+      showToast('请先填写姓名、电话和本次最想解决的问题');
+      const target=!String(data.name||'').trim()?'name':!String(data.phone||'').trim()?'phone':'primary_concern';
+      document.querySelector('[name="'+target+'"]')?.focus();return;
+    }
+    data.form_type='new_customer_quick';data.form_version='v1';
+    const button=document.getElementById('submitBtn');button.disabled=true;button.textContent='提交中…';
+    if(localDemo||tenant.localOnly){
+      const key='facesheet_submissions_'+tenant.slug;let records=[];try{records=JSON.parse(localStorage.getItem(key)||'[]')}catch(error){}
+      records.push({id:'local-'+Date.now(),tenant_id:tenant.id,customer_name:data.name,data,created_at:new Date().toISOString()});localStorage.setItem(key,JSON.stringify(records));
+      button.disabled=false;button.textContent='提交到门店';localStorage.removeItem('facesheet_'+DRAFT_VERSION+'_'+tenant.slug);showToast('已保存到本地演示记录');return;
+    }
+    const payload={tenant_id:tenant.id,customer_name:data.name,...data};
+    const {error}=await sb.rpc('submit_form',{p_data:payload});
+    button.disabled=false;button.textContent='提交到门店';
+    if(error){console.error(error);showToast('提交失败：'+error.message)}else{localStorage.removeItem('facesheet_'+DRAFT_VERSION+'_'+tenant.slug);showToast('已提交到'+tenant.brand_name);setTimeout(()=>location.reload(),1400)}
+  }
+  function setupArchiveMode(){
+    document.body.classList.add('archive-mode');document.getElementById('saved').textContent='历史快速面诊 · 只读';
+    document.querySelector('.archive-print').style.display='flex';allFields().forEach(el=>el.disabled=true);
+  }
+  function applyArchiveData(payload){if(!archiveMode)return;fill(payload?.data||{});updateRiskDetail();document.title=(tenant?.brand_name||'京淼')+' · 历史新客快速面诊';window.scrollTo({top:0,behavior:'instant'})}
+  window.addEventListener('message',event=>{if(!archiveMode||event.origin!==location.origin||event.source!==window.parent||event.data?.type!=='jingmiao-archive-data')return;applyArchiveData(event.data.payload)});
+  function showToast(message){const toast=document.getElementById('toast');toast.textContent=message;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),2500)}
+  document.querySelectorAll('.stepnav a').forEach(link=>link.addEventListener('click',()=>{document.querySelectorAll('.stepnav a').forEach(item=>item.classList.remove('active'));link.classList.add('active')}));
+  window.addEventListener('scroll',()=>{const max=document.documentElement.scrollHeight-innerHeight,pct=max>0?Math.min(1,scrollY/max):0;document.getElementById('progressBar').style.transform='scaleX('+pct+')'},{passive:true});
+  init();
+</script>
+</body>
+</html>
