@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>专业面诊表</title>
+<script>
+  if(new URLSearchParams(location.search).get('layout')==='mobile'){
+    document.documentElement.classList.add('mobile-layout');
+  }
+</script>
 <style>
   :root{
     --red:#C0392B; --red-bg:#FBF1F0;
@@ -104,6 +109,58 @@
   .archive-mode .trust-note b::before{content:'历史记录 · ';}
   @media (max-width:640px){body{overflow-x:hidden}.toolbar{justify-content:flex-end;flex-wrap:wrap}.toolbar .brand{width:100%;margin-right:0}.toolbar #saved{margin-right:auto}.toolbar .archive-link{display:none}.page{width:calc(100% - 24px);max-width:none;margin:18px 12px 60px;padding:18px 14px;overflow:hidden}.section-nav{margin-left:-2px; margin-right:-2px;} .infobar{grid-template-columns:repeat(2,1fr);} .face-wrap{grid-template-columns:1fr;} .checks.g2{grid-template-columns:repeat(2,1fr);}table.wide{width:100%;max-width:100%;contain:inline-size}}
   @media (pointer:coarse){.toolbar button,.section-nav a,.chk{min-height:44px;} .chk{padding:6px 8px;} select.f,input.f{min-height:42px;}}
+  @media screen{
+    html.mobile-layout body{background:#fff;font-size:16px;padding-bottom:calc(112px + env(safe-area-inset-bottom));overflow-x:hidden;}
+    html.mobile-layout .page{width:100%;max-width:none;margin:0;padding:18px 14px 36px;border-radius:0;box-shadow:none;overflow:visible;}
+    html.mobile-layout header.doc-head{margin-bottom:14px;}
+    html.mobile-layout header.doc-head h1{font-size:20px;line-height:1.3;}
+    html.mobile-layout .toolbar{position:fixed;top:auto;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;padding:6px 10px calc(8px + env(safe-area-inset-bottom));box-shadow:0 -4px 18px rgba(0,0,0,.16);}
+    html.mobile-layout .toolbar .brand{display:none;}
+    html.mobile-layout .toolbar #saved{grid-column:1/-1;min-width:0;margin:0;text-align:center;line-height:1.2;}
+    html.mobile-layout .toolbar .archive-link{display:flex;align-items:center;justify-content:center;}
+    html.mobile-layout .toolbar button,html.mobile-layout .toolbar .archive-link{min-width:0;min-height:44px;padding:7px 5px;font-size:13px;text-align:center;}
+    html.mobile-layout.archive-mode .toolbar{grid-template-columns:1fr;}
+    html.mobile-layout .section-nav{position:sticky;top:0;z-index:45;margin:0 -14px 14px;padding:7px 14px;background:rgba(255,255,255,.97);box-shadow:0 2px 9px rgba(0,0,0,.07);}
+    html.mobile-layout .section-nav a{display:flex;align-items:center;min-height:44px;padding:7px 11px;font-size:13px;}
+    html.mobile-layout .trust-note{padding:11px 12px;line-height:1.65;}
+    html.mobile-layout .infobar{grid-template-columns:1fr;gap:11px;}
+    html.mobile-layout .infobar label{font-size:14px;}
+    html.mobile-layout input,html.mobile-layout select,html.mobile-layout textarea{font-size:16px;}
+    html.mobile-layout input.f,html.mobile-layout select.f{min-height:44px;}
+    html.mobile-layout textarea.f{min-height:64px;}
+    html.mobile-layout .sec-title{margin:20px 0 10px;padding:10px 12px;font-size:16px;line-height:1.45;scroll-margin-top:62px;}
+    html.mobile-layout .sub-title{font-size:15px;line-height:1.5;}
+    html.mobile-layout .hint-text{display:block;margin-top:2px;line-height:1.5;}
+    html.mobile-layout .assessment-box{padding:10px;}
+    html.mobile-layout .checks{gap:7px;padding:8px 0;}
+    html.mobile-layout .checks.g2{grid-template-columns:1fr;gap:7px;}
+    html.mobile-layout .chk{min-height:44px;padding:7px 9px;font-size:14px;line-height:1.35;border:1px solid #eee9e4;border-radius:8px;background:#fff;}
+    html.mobile-layout .chk:has(input:checked){padding:7px 9px;border-color:#000;}
+    html.mobile-layout .chk input{flex:0 0 auto;width:18px;height:18px;}
+    html.mobile-layout .face-wrap{grid-template-columns:1fr;}
+    html.mobile-layout .photo-frame{height:180px;}
+    html.mobile-layout .fast-group summary{min-height:48px;padding:12px;}
+    html.mobile-layout .fast-group summary span{display:block;margin:3px 0 0;}
+    html.mobile-layout .fast-group .group-body{padding:0 10px 10px;}
+    html.mobile-layout .lbl{width:auto!important;white-space:normal;}
+    html.mobile-layout table.wide{display:block;width:100%;max-width:100%;overflow:visible;contain:none;}
+    html.mobile-layout table.mobile-form-table,html.mobile-layout table.mobile-form-table tbody{display:block;width:100%;min-width:0;}
+    html.mobile-layout table.mobile-form-table tr{display:grid;grid-template-columns:minmax(108px,38%) minmax(0,1fr);margin-bottom:10px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff;}
+    html.mobile-layout table.mobile-form-table td{min-width:0;width:auto!important;border:0;border-bottom:1px solid var(--line);padding:10px;font-size:14px;overflow-wrap:anywhere;}
+    html.mobile-layout table.mobile-form-table td:nth-last-child(-n+2){border-bottom:0;}
+    html.mobile-layout table.mobile-form-table td[colspan]{grid-column:2/-1;}
+    html.mobile-layout table.mobile-form-table td:only-child{grid-column:1/-1;border-bottom:0;}
+    html.mobile-layout table.mobile-data-table,html.mobile-layout table.mobile-data-table tbody{display:block;width:100%;min-width:0;}
+    html.mobile-layout table.mobile-data-table .mobile-head-row{display:none;}
+    html.mobile-layout table.mobile-data-table tr:not(.mobile-head-row){display:block;margin-bottom:12px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff;}
+    html.mobile-layout table.mobile-data-table td{display:grid;grid-template-columns:92px minmax(0,1fr);gap:10px;align-items:start;width:100%!important;min-width:0;border:0;border-bottom:1px solid var(--line);padding:10px;font-size:14px;background:#fff;overflow-wrap:anywhere;}
+    html.mobile-layout table.mobile-data-table td:last-child{border-bottom:0;}
+    html.mobile-layout table.mobile-data-table td::before{content:attr(data-label);font-weight:700;color:#59534d;line-height:1.45;}
+    html.mobile-layout table.mobile-data-table input.f,html.mobile-layout table.mobile-data-table select.f,html.mobile-layout table.mobile-data-table textarea.f{min-width:0;}
+    html.mobile-layout #modeMsg{margin:10px 12px 0;}
+    html.mobile-layout .toast{bottom:calc(124px + env(safe-area-inset-bottom));max-width:calc(100% - 28px);text-align:center;}
+  }
+  @media screen and (min-width:480px){html.mobile-layout .infobar{grid-template-columns:repeat(2,minmax(0,1fr));}}
 </style>
 </head>
 <body>
@@ -498,10 +555,35 @@
   const params = new URLSearchParams(location.search);
   const slug = params.get('store') || 'demo';
   const archiveMode = params.get('archive') === '1';
+  const mobileLayout = params.get('layout') === 'mobile';
   const LOCAL_DEMO_TENANT = {id:'local-demo', slug:'demo', brand_name:'京淼', primary_color:'#C0392B', logo_url:null, localOnly:true};
   const DRAFT_VERSION = 'v3';
   let tenant = null;
   let localDemo = false;
+
+  function prepareMobileLayout(){
+    if(!mobileLayout) return;
+    const toolbarButtons=document.querySelectorAll('.toolbar button');
+    if(toolbarButtons[0]) toolbarButtons[0].textContent='导出 PDF';
+    if(toolbarButtons[1]) toolbarButtons[1].textContent='提交门店';
+    document.querySelectorAll('#page table').forEach(table=>{
+      const firstRow=table.rows[0];
+      if(!firstRow) return;
+      const headers=Array.from(firstRow.cells).filter(cell=>cell.tagName==='TH');
+      if(headers.length>=2){
+        table.classList.add('mobile-data-table');
+        firstRow.classList.add('mobile-head-row');
+        Array.from(table.rows).slice(1).forEach(row=>{
+          Array.from(row.cells).forEach((cell,index)=>{
+            cell.dataset.label=(headers[index]?.textContent||('项目 '+(index+1))).trim();
+          });
+        });
+      }else{
+        table.classList.add('mobile-form-table');
+      }
+    });
+  }
+  prepareMobileLayout();
 
   async function init(){
     const localPreview=(location.protocol==='file:' || ['127.0.0.1','localhost'].includes(location.hostname)) && slug==='demo';
